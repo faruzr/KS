@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>สั่งสต็อก - วัตถุดิบ</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue-900: #0f2d5e;
+    --blue-700: #1a4a9c;
+    --blue-500: #2563eb;
+    --blue-400: #3b82f6;
+    --blue-100: #dbeafe;
+    --blue-50: #eff6ff;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-400: #94a3b8;
+    --gray-600: #475569;
+    --gray-800: #1e293b;
+    --white: #ffffff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: #1a1a2e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .phone-frame {
+    width: 390px;
+    height: 844px;
+    background: var(--gray-50);
+    border-radius: 48px;
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6), inset 0 0 0 2px rgba(255,255,255,0.1);
+    display: flex;
+    flex-direction: column;
+  }
+  .status-bar {
+    background: var(--blue-900);
+    padding: 14px 28px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .status-time { color: white; font-size: 15px; font-weight: 600; }
+  .status-icons { display: flex; gap: 6px; align-items: center; color: white; font-size: 12px; }
+  .header {
+    background: var(--blue-900);
+    padding: 10px 20px 14px;
+    flex-shrink: 0;
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: center; }
+  .header-title { color: white; font-size: 19px; font-weight: 700; }
+  .header-date { color: var(--blue-100); font-size: 11.5px; opacity: 0.8; margin-top: 2px; }
+  .header-badge {
+    background: var(--blue-500); color: white;
+    font-size: 11px; padding: 3px 10px;
+    border-radius: 20px; font-weight: 600;
+  }
+  .tab-bar {
+    background: var(--blue-900);
+    padding: 0 10px 0;
+    flex-shrink: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    display: flex;
+    gap: 2px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    white-space: nowrap;
+    padding: 9px 13px;
+    font-size: 12px;
+    font-family: 'Sarabun', sans-serif;
+    font-weight: 500;
+    color: rgba(255,255,255,0.5);
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-bottom: 2.5px solid transparent;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .tab-btn.active { color: white; border-bottom-color: #60a5fa; font-weight: 700; }
+  .summary-bar {
+    background: var(--blue-50);
+    padding: 7px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--gray-200);
+    flex-shrink: 0;
+  }
+  .summary-text { font-size: 12px; color: var(--gray-600); }
+  .summary-count { font-size: 12px; font-weight: 700; color: var(--blue-700); background: var(--blue-100); padding: 2px 8px; border-radius: 10px; }
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 13px 6px;
+    scrollbar-width: none;
+  }
+  .content::-webkit-scrollbar { display: none; }
+  .section-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--gray-400);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 8px 4px 5px;
+  }
+  .item-row {
+    background: white;
+    border-radius: 11px;
+    padding: 9px 12px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1.5px solid var(--gray-100);
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .item-row.has-value { border-color: var(--blue-400); background: var(--blue-50); }
+  .item-row.has-value .item-name { color: var(--blue-700); }
+
+.item-group { margin-bottom: 6px; }
+.item-group-name {
+font-size: 12.5px; font-weight: 700; color: var(–gray-800);
+padding: 7px 14px 4px; background: var(–gray-100);
+border-radius: 11px 11px 0 0;
+border: 1.5px solid var(–gray-200); border-bottom: none;
+}
+.item-group-name.any-filled { background: var(–blue-100); border-color: var(–blue-400); color: var(–blue-700); }
+.item-group .item-row {
+border-radius: 0; margin-bottom: 0; border-top: none;
+border-left: 1.5px solid var(–gray-200); border-right: 1.5px solid var(–gray-200);
+border-bottom: 1px solid var(–gray-100); padding: 7px 12px;
+}
+.item-group .item-row:last-child { border-radius: 0 0 11px 11px; border-bottom: 1.5px solid var(–gray-200); }
+.item-group .item-row.has-value { border-left-color: var(–blue-400); border-right-color: var(–blue-400); background: var(–blue-50); }
+.item-info { flex: 1; min-width: 0; }
+.item-name { font-size: 13px; font-weight: 600; color: var(–gray-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item-unit { font-size: 11px; color: var(–gray-400); margin-top: 1px; }
+.stepper { display: flex; align-items: center; background: var(–gray-100); border-radius: 9px; overflow: hidden; flex-shrink: 0; }
+.step-btn { width: 30px; height: 30px; border: none; background: none; font-size: 17px; color: var(–blue-700); cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 500; transition: background 0.1s; }
+.step-btn:active { background: var(–blue-100); }
+.step-input { width: 40px; height: 30px; border: none; background: white; text-align: center; font-size: 13px; font-weight: 700; color: var(–gray-800); font-family: ‘Sarabun’, sans-serif; outline: none; }
+.step-input:focus { background: var(–blue-50); color: var(–blue-700); }
+
+/* Note + bottom */
+.bottom-bar {
+background: white;
+border-top: 1px solid var(–gray-200);
+padding: 10px 14px 18px;
+flex-shrink: 0;
+}
+.note-field {
+width: 100%;
+border: 1.5px solid var(–gray-200);
+border-radius: 11px;
+padding: 9px 12px;
+font-size: 13px;
+font-family: ‘Sarabun’, sans-serif;
+color: var(–gray-800);
+resize: none;
+outline: none;
+margin-bottom: 9px;
+background: var(–gray-50);
+transition: border-color 0.2s;
+line-height: 1.5;
+min-height: 52px;
+max-height: 52px;
+}
+.note-field:focus { border-color: var(–blue-400); background: var(–blue-50); }
+.bottom-row {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 8px;
+}
+.bottom-label { font-size: 12px; color: var(–gray-600); }
+.bottom-count { font-size: 13px; font-weight: 700; color: var(–blue-700); }
+.btn-pdf {
+width: 100%;
+background: linear-gradient(135deg, var(–blue-700), var(–blue-500));
+color: white;
+border: none;
+border-radius: 13px;
+padding: 13px;
+font-size: 14.5px;
+font-weight: 700;
+font-family: ‘Sarabun’, sans-serif;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 7px;
+box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+transition: opacity 0.2s;
+}
+.btn-pdf:active { opacity: 0.85; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+</style>
+
+</head>
+<body>
+<div class="phone-frame">
+
+  <div class="status-bar">
+    <span class="status-time" id="clock">9:41</span>
+    <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+  </div>
+
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="header-title">📦 สั่งสต็อก</div>
+        <div class="header-date" id="hdate">รอบวันที่ ... · สาขา หาดใหญ่</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab(0,this)">กงสิ</button>
+    <button class="tab-btn" onclick="switchTab(1,this)">ทั่วไป</button>
+    <button class="tab-btn" onclick="switchTab(2,this)">ออนไลน์</button>
+    <button class="tab-btn" onclick="switchTab(3,this)">PK BKK</button>
+    <button class="tab-btn" onclick="switchTab(4,this)">พร้อมเพย์</button>
+  </div>
+
+  <div class="summary-bar">
+    <span class="summary-text">กรอกจำนวนที่ต้องการสั่ง</span>
+    <span class="summary-count" id="tab-count">0 / 0</span>
+  </div>
+
+  <div class="content" id="content-area">
+    <div class="tab-panel active" id="tab-0"><div class="section-label">วัตถุดิบกงสิ</div><div class="item-group" id="pearlblack"><div class="item-group-name" id="pearlblack-label">🫧 ไข่มุกดำ</div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ลัง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('pearlblack')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('pearlblack')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div></div><div class="item-row"><div class="item-info"><div class="item-name">ใบชาแดง</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ใบชาเขียว</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ใบมะลิ</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ใบชาไทย</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ผงโอเลี้ยง</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ผงครีมซัส</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ซอสบราวน์ชูการ์</div><div class="item-unit">แกลลอน</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ไซรัปแดงโบราณ</div><div class="item-unit">แกลลอน</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ฝาซีลแก้ว</div><div class="item-unit">ม้วน</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-group" id="glass"><div class="item-group-name" id="glass-label">🥤 แก้ว</div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">แถว</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('glass')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ลัง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('glass')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div></div><div class="item-row"><div class="item-info"><div class="item-name">หลอดเล็ก</div><div class="item-unit">แพ็ค</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">หลอดไข่มุก</div><div class="item-unit">แพ็ค</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ไซรัปมะปิด</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div></div>
+    <div class="tab-panel" id="tab-1"><div class="section-label">ไซรัปปลองบีช</div><div class="item-row"><div class="item-info"><div class="item-name">ไซรัปปลองบีช กลิ่นคาราเมล</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ไซรัปปลองบีช กลิ่นพีช</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ไซรัปปลองบีช กลิ่นมิ้นท์</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="section-label">ไซรัปดึ้งฟง</div><div class="item-row"><div class="item-info"><div class="item-name">ไซรัปดึ้งฟง กลิ่นบลูฮาวาย</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ไซรัปดึ้งฟง กลิ่นบลูเบอร์รี่</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ไซรัปดึ้งฟง กลิ่นสตรอเบอร์รี่</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ไซรัปดึ้งฟง กลิ่นแอปเปิ้ล</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ไซรัปดึ้งฟง กลิ่นลิ้นจี่</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ไซรัปดึ้งฟง กลิ่นเสาวรส</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="section-label">น้ำผลไม้ & อื่นๆ</div><div class="item-row"><div class="item-info"><div class="item-name">น้ำผลไม้เข้มข้น ซันควิก รสผลไม้รวม</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">น้ำผลไม้เข้มข้น ซันควิก รสส้มนิดเข้มข้น</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">เฮลสัมลูบอยแดง</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="section-label">ผง & อื่นๆ</div><div class="item-row"><div class="item-info"><div class="item-name">ผงโกโก้ ทิวลิป สีเข้ม</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ผงไมโล</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ผงโอวัลติน สูตร 3</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ผงเนสกาแฟเรดคัพแบบถุง</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">น้ำผึ้งแท้</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">เจลลี่ฟรุตสลัด กลิ่นผลไม้รวม</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">นมจืด เมจิ แกลลอน 2 ลิตร</div><div class="item-unit">แกลลอน</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div></div>
+    <div class="tab-panel" id="tab-2"><div class="section-label">ออนไลน์</div><div class="item-row"><div class="item-info"><div class="item-name">ผงเมือก อีเหรียน</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">เนื้อมะปีด</div><div class="item-unit">กิโลกรัม</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">บุกป็อปสตรอเบอร์รี่</div><div class="item-unit">กระปุก</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">บุกป็อปลิ้นจี่</div><div class="item-unit">กระปุก</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">บุกป็อปพีช</div><div class="item-unit">กระปุก</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">รูปผาผงโกโก้</div><div class="item-unit">ชุด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ผงพุดดิ้งไข่</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ไซรัปสับปะรด</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ไซรัปส้มมะง่อ</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ไซรัปโยเกิร์ต</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ปลาไข้</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ส้มไบกระป๋อง</div><div class="item-unit">กระป๋อง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ส้มผสมดอกกระป๋อง</div><div class="item-unit">กระป๋อง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">กล้วย 3 ออนซ์</div><div class="item-unit">แถว</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div></div>
+    <div class="tab-panel" id="tab-3"><div class="section-label">PK พาณิชย์ BKK</div><div class="item-group" id="buk1"><div class="item-group-name" id="buk1-label">🧊 บุกดึ้งฟง รสน้ำตาล</div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ลัง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('buk1')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('buk1')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div></div><div class="item-group" id="buk2"><div class="item-group-name" id="buk2-label">🧊 บุกดึ้งฟง รสน้ำผึ้ง</div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ลัง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('buk2')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('buk2')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div></div><div class="item-group" id="buk3"><div class="item-group-name" id="buk3-label">🧊 บุกดึ้งฟง รสบราวน์ชูการ์</div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ลัง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('buk3')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('buk3')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div></div><div class="section-label">บรรจุภัณฑ์</div><div class="item-row"><div class="item-info"><div class="item-name">กระดาษปริ้นความร้อน 80*80 มม.</div><div class="item-unit">แพ็ค</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">กระดาษปริ้นความร้อน 57*38 มม.</div><div class="item-unit">ม้วน</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ถุงโฟมแก้วน้ำ 1 ช่อง</div><div class="item-unit">แพ็ค</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ถุงริ้ว ใส เหนียว 8*14</div><div class="item-unit">แพ็ค</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ถุงริ้ว ใส เหนียว 8*16</div><div class="item-unit">แพ็ค</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ถุงริ้ว ใส เหนียว 9*18</div><div class="item-unit">แพ็ค</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ถุงใสซาแบบขุ่น 16*26</div><div class="item-unit">แพ็ค</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ถ้วยใสทีอปปิ้ง 2 ออนซ์</div><div class="item-unit">แพ็ค</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ถุงซิปล็อค 15*21</div><div class="item-unit">แพ็ค</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ยางวงเส้นใหญ่</div><div class="item-unit">แพ็ค</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ถุงมือไซส์ M</div><div class="item-unit">กล่อง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ถุงขยะแบบหนา 30*40 Hero</div><div class="item-unit">แพ็ค</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">กระดาษดิสเพนเซอร์อเนกประสงค์ 6 ม้วน</div><div class="item-unit">แพ็ค</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="section-label">ทำความสะอาด</div><div class="item-group" id="tissue"><div class="item-group-name" id="tissue-label">🧻 ทิชชู่</div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">แพ็ค</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('tissue')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ม้วน</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('tissue')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div></div><div class="item-group" id="dish"><div class="item-group-name" id="dish-label">🧴 น้ำยาล้างจาน</div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">แพ็ค</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('dish')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('dish')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div></div><div class="item-row"><div class="item-info"><div class="item-name">น้ำยาถูพื้น</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">ฝาโฟม 95 รุ่นใหญ่</div><div class="item-unit">แถว</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">โอวัลติน เฟลด (ท็อปปิ้ง)</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">น้ำยาทำความสะอาดเคาน์เตอร์อเนกประสงค์</div><div class="item-unit">ขวด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div></div>
+    <div class="tab-panel" id="tab-4"><div class="section-label">พร้อมเพย์</div><div class="item-row"><div class="item-info"><div class="item-name">กระดาษครอบฝาแก้ว</div><div class="item-unit">แพ็ค</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">บ๊วยดอง กระปุกใหญ่</div><div class="item-unit">กระปุก</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">มะนาว</div><div class="item-unit">กก.</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="section-label">นม & ครีม</div><div class="item-row"><div class="item-info"><div class="item-name">โชตารี่ คมาเท่น</div><div class="item-unit">ถาด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">นมข้นจืด คาร์เนชั่น 385 กรัม</div><div class="item-unit">ถาด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">นมข้นหวาน คาร์เนชั่น 388 กรัม</div><div class="item-unit">ถาด</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-group" id="sugar"><div class="item-group-name" id="sugar-label">🧂 น้ำตาลมิตรผล กลิ่นคาราเมล</div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">แพ็ค</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('sugar')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('sugar')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div></div><div class="item-row"><div class="item-info"><div class="item-name">น้ำเชื่อมมิตรผล ถุงสีม่วง</div><div class="item-unit">ลัง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-group" id="cream"><div class="item-group-name" id="cream-label">🥛 ผงครีมเทียม ครีมมี่ ถุงสีฟ้า</div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ลัง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('cream')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('cream')"><button class="step-btn" onclick="adj(this,1)">+</button></div></div></div><div class="section-label">เนื้อผลไม้ & ท็อปปิ้ง</div><div class="item-row"><div class="item-info"><div class="item-name">เนื้อมะม่วงแช่แข็ง</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">เนื้อส้มแช่แข็ง</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">เนื้อพีชแช่แข็ง</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div><div class="item-row"><div class="item-info"><div class="item-name">เนื้อมิกซ์เบอร์รี่แช่แข็ง</div><div class="item-unit">ถุง</div></div><div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div></div></div>
+  </div>
+
+  <div class="bottom-bar">
+    <div class="bottom-row">
+      <span class="bottom-label">รายการที่กรอกแล้ว</span>
+      <span class="bottom-count" id="total-filled">0 รายการ</span>
+    </div>
+    <textarea class="note-field" id="note-field" placeholder="💬 อยากได้อะไรเพิ่มเป็นพิเศษ?" rows="2"></textarea>
+    <button class="btn-pdf" onclick="exportPDF()">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      ส่งใบสั่งสต็อก (PDF)
+    </button>
+  </div>
+
+</div>
+
+<script>
+  let currentTab = 0;
+
+  function switchTab(idx, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + idx).classList.add('active');
+    btn.classList.add('active');
+    currentTab = idx;
+    updateTabCount();
+  }
+
+  function adj(btn, delta) {
+    const input = btn.parentElement.querySelector('.step-input');
+    input.value = Math.max(0, (parseInt(input.value) || 0) + delta);
+    updateRow(input);
+  }
+
+  function chg(input) { updateRow(input); }
+
+  function updateRow(input) {
+    input.closest('.item-row').classList.toggle('has-value', (parseInt(input.value)||0) > 0);
+    updateCounts();
+  }
+
+  function updateCounts() {
+    let total = 0;
+    document.querySelectorAll('.step-input').forEach(i => { if ((parseInt(i.value)||0) > 0) total++; });
+    document.getElementById('total-filled').textContent = total + ' รายการ';
+    updateTabCount();
+  }
+
+  function updateTabCount() {
+    const panel = document.getElementById('tab-' + currentTab);
+    const inputs = panel.querySelectorAll('.step-input');
+    let filled = 0;
+    inputs.forEach(i => { if ((parseInt(i.value)||0) > 0) filled++; });
+    document.getElementById('tab-count').textContent = filled + ' / ' + inputs.length;
+  }
+
+  function updGrp(id) {
+    const grp = document.getElementById(id);
+    const label = document.getElementById(id + '-label');
+    label.classList.toggle('any-filled', [...grp.querySelectorAll('.step-input')].some(i => (parseInt(i.value)||0) > 0));
+  }
+
+  function exportPDF() {
+    const note = document.getElementById('note-field').value;
+    alert(note ? '✅ ส่งใบสั่งสต็อก PDF เรียบร้อย!\n\n📝 หมายเหตุ: ' + note : '✅ ส่งใบสั่งสต็อก PDF เรียบร้อย!');
+  }
+
+  // วันที่และเวลาอัตโนมัติ
+  (function() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    const thYear = d.getFullYear() + 543 - 2500;
+    document.getElementById('hdate').textContent = `รอบวันที่ ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${thYear} · สาขา หาดใหญ่`;
+    document.getElementById('clock').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
+  })();
+
+  updateTabCount();
+</script>
+
+</body>
+</html>
