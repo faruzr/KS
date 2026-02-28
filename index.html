@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>สั่งสต็อก - วัตถุดิบ</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue-900: #0f2d5e;
+    --blue-700: #1a4a9c;
+    --blue-500: #2563eb;
+    --blue-400: #3b82f6;
+    --blue-100: #dbeafe;
+    --blue-50:  #eff6ff;
+    --green-600: #16a34a;
+    --green-100: #dcfce7;
+    --red-500:  #ef4444;
+    --red-100:  #fee2e2;
+    --gray-50:  #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-400: #94a3b8;
+    --gray-600: #475569;
+    --gray-800: #1e293b;
+    --white:    #ffffff;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: #1a1a2e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  /* ─── Phone Frame ─── */
+  .phone-frame {
+    width: 390px; height: 844px;
+    background: var(--gray-50);
+    border-radius: 48px;
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0,0,0,.6), inset 0 0 0 2px rgba(255,255,255,.1);
+    display: flex; flex-direction: column;
+    position: relative;
+  }
+
+  /* ─── Status Bar ─── */
+  .status-bar {
+    background: var(--blue-900);
+    padding: 14px 28px 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
+  }
+  .status-time { color:white; font-size:15px; font-weight:600; }
+  .status-icons { display:flex; gap:6px; align-items:center; color:white; font-size:12px; }
+
+  /* ─── Header ─── */
+  .header {
+    background: var(--blue-900);
+    padding: 10px 20px 14px;
+    flex-shrink: 0;
+  }
+  .header-top { display:flex; justify-content:space-between; align-items:flex-start; }
+  .header-title { color:white; font-size:19px; font-weight:700; }
+  .header-date  { color:var(--blue-100); font-size:11.5px; opacity:.8; margin-top:2px; }
+
+
+  /* ─── Tab Bar ─── */
+  .tab-bar {
+    background: var(--blue-900);
+    padding: 0 10px 0;
+    flex-shrink: 0;
+    overflow-x: auto; scrollbar-width: none;
+    display: flex; gap: 2px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .tab-bar::-webkit-scrollbar { display:none; }
+  .tab-btn {
+    white-space: nowrap; padding: 9px 13px; font-size: 12px;
+    font-family: 'Sarabun', sans-serif; font-weight: 500;
+    color: rgba(255,255,255,.5); background: none; border: none;
+    cursor: pointer; border-bottom: 2.5px solid transparent; transition: all .2s; flex-shrink:0;
+  }
+  .tab-btn.active { color:white; border-bottom-color:#60a5fa; font-weight:700; }
+
+  /* ─── Summary Bar ─── */
+  .summary-bar {
+    background: var(--blue-50); padding: 7px 16px;
+    display: flex; align-items:center; justify-content:space-between;
+    border-bottom: 1px solid var(--gray-200); flex-shrink:0;
+  }
+  .summary-text  { font-size:12px; color:var(--gray-600); }
+  .summary-count { font-size:12px; font-weight:700; color:var(--blue-700);
+                   background:var(--blue-100); padding:2px 8px; border-radius:10px; }
+
+  /* ─── Content / Items ─── */
+  .content {
+    flex:1; overflow-y:auto; padding:8px 13px 6px; scrollbar-width:none;
+  }
+  .content::-webkit-scrollbar { display:none; }
+  .section-label {
+    font-size:10.5px; font-weight:700; color:var(--gray-400);
+    letter-spacing:.8px; text-transform:uppercase; padding:8px 4px 5px;
+  }
+  .item-row {
+    background:white; border-radius:11px; padding:9px 12px;
+    margin-bottom:6px; display:flex; align-items:center; gap:10px;
+    box-shadow:0 1px 3px rgba(0,0,0,.05);
+    border:1.5px solid var(--gray-100); transition:border-color .15s,background .15s;
+  }
+  .item-row.has-value { border-color:var(--blue-400); background:var(--blue-50); }
+  .item-row.has-value .item-name { color:var(--blue-700); }
+  .item-group { margin-bottom:6px; }
+  .item-group-name {
+    font-size:12.5px; font-weight:700; color:var(--gray-800);
+    padding:7px 14px 4px; background:var(--gray-100);
+    border-radius:11px 11px 0 0;
+    border:1.5px solid var(--gray-200); border-bottom:none;
+  }
+  .item-group-name.any-filled { background:var(--blue-100); border-color:var(--blue-400); color:var(--blue-700); }
+  .item-group .item-row {
+    border-radius:0; margin-bottom:0; border-top:none;
+    border-left:1.5px solid var(--gray-200); border-right:1.5px solid var(--gray-200);
+    border-bottom:1px solid var(--gray-100); padding:7px 12px;
+  }
+  .item-group .item-row:last-child { border-radius:0 0 11px 11px; border-bottom:1.5px solid var(--gray-200); }
+  .item-group .item-row.has-value { border-left-color:var(--blue-400); border-right-color:var(--blue-400); background:var(--blue-50); }
+  .item-info  { flex:1; min-width:0; }
+  .item-name  { font-size:13px; font-weight:600; color:var(--gray-800); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .item-unit  { font-size:11px; color:var(--gray-400); margin-top:1px; }
+  .stepper    { display:flex; align-items:center; background:var(--gray-100); border-radius:9px; overflow:hidden; flex-shrink:0; }
+  .step-btn   { width:30px; height:30px; border:none; background:none; font-size:17px; color:var(--blue-700);
+                cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:500; transition:background .1s; }
+  .step-btn:active { background:var(--blue-100); }
+  .step-input { width:40px; height:30px; border:none; background:white; text-align:center;
+                font-size:13px; font-weight:700; color:var(--gray-800);
+                font-family:'Sarabun',sans-serif; outline:none; }
+  .step-input:focus { background:var(--blue-50); color:var(--blue-700); }
+  .step-input:disabled { background:var(--gray-100); color:var(--gray-400); }
+  .step-btn:disabled { opacity:.3; cursor:not-allowed; }
+
+  /* ─── Bottom Bar ─── */
+  .bottom-bar {
+    background:white; border-top:1px solid var(--gray-200);
+    padding:10px 14px 18px; flex-shrink:0;
+  }
+  .note-field {
+    width:100%; border:1.5px solid var(--gray-200); border-radius:11px;
+    padding:9px 12px; font-size:13px; font-family:'Sarabun',sans-serif;
+    color:var(--gray-800); resize:none; outline:none; margin-bottom:9px;
+    background:var(--gray-50); transition:border-color .2s; line-height:1.5;
+    min-height:52px; max-height:52px;
+  }
+  .note-field:focus { border-color:var(--blue-400); background:var(--blue-50); }
+  .bottom-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .bottom-label { font-size:12px; color:var(--gray-600); }
+  .bottom-count { font-size:13px; font-weight:700; color:var(--blue-700); }
+
+  .btn-lock {
+    width:100%;
+    background: linear-gradient(135deg,#16a34a,#15803d);
+    color:white; border:none; border-radius:13px; padding:13px;
+    font-size:14.5px; font-weight:700; font-family:'Sarabun',sans-serif;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px;
+    box-shadow:0 4px 14px rgba(22,163,74,.35); transition:opacity .2s;
+  }
+  .btn-lock:active { opacity:.85; }
+  .btn-lock:disabled { background:#94a3b8; box-shadow:none; cursor:not-allowed; }
+
+  /* ─── Tab Panels ─── */
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+
+  /* ─────────────────────────────────────────
+     LOCK OVERLAY (Review Modal)
+  ───────────────────────────────────────── */
+  .lock-overlay {
+    position:absolute; inset:0; background:rgba(15,45,94,.55);
+    display:flex; align-items:flex-end; z-index:100;
+    backdrop-filter: blur(2px);
+    transition: opacity .25s;
+  }
+  .lock-overlay.hidden { display:none; }
+  .lock-sheet {
+    width:100%; background:white;
+    border-radius:28px 28px 0 0;
+    padding:20px 18px 28px;
+    max-height:75%;
+    display:flex; flex-direction:column;
+  }
+  .lock-drag { width:40px; height:4px; background:var(--gray-200); border-radius:4px; margin:0 auto 14px; }
+  .lock-title { font-size:17px; font-weight:700; color:var(--gray-800); margin-bottom:3px; }
+  .lock-subtitle { font-size:12px; color:var(--gray-400); margin-bottom:14px; }
+  .lock-items-wrap { flex:1; overflow-y:auto; scrollbar-width:none; margin-bottom:12px; }
+  .lock-items-wrap::-webkit-scrollbar { display:none; }
+  .lock-item-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:7px 0; border-bottom:1px solid var(--gray-100); font-size:13px;
+  }
+  .lock-item-name { color:var(--gray-800); font-weight:500; }
+  .lock-item-qty  { font-weight:700; color:var(--blue-700); background:var(--blue-50);
+                    padding:2px 10px; border-radius:10px; font-size:12px; }
+  .lock-tab-label { font-size:10px; font-weight:700; color:var(--gray-400);
+                    letter-spacing:.7px; text-transform:uppercase; padding:10px 0 4px; }
+  .lock-empty { text-align:center; color:var(--gray-400); font-size:13px; padding:20px 0; }
+  .lock-note-display {
+    background:var(--blue-50); border-radius:10px; padding:9px 12px;
+    font-size:12px; color:var(--gray-600); margin-bottom:10px; display:none;
+  }
+  .lock-warning {
+    font-size:12px; color:#b45309; background:#fef9c3; border-radius:10px;
+    padding:8px 12px; text-align:center; margin-bottom:14px;
+  }
+  .lock-buttons { display:flex; gap:10px; }
+  .btn-cancel  {
+    flex:1; background:var(--gray-100); color:var(--gray-700); border:none;
+    border-radius:13px; padding:12px; font-size:14px; font-weight:700;
+    font-family:'Sarabun',sans-serif; cursor:pointer;
+  }
+  .btn-confirm {
+    flex:2; background:linear-gradient(135deg,#16a34a,#15803d); color:white; border:none;
+    border-radius:13px; padding:12px; font-size:14px; font-weight:700;
+    font-family:'Sarabun',sans-serif; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .btn-confirm:disabled { background:#94a3b8; cursor:not-allowed; }
+
+  /* ─────────────────────────────────────────
+     LOADING OVERLAY
+  ───────────────────────────────────────── */
+  .loading-overlay {
+    position:absolute; inset:0; background:rgba(15,45,94,.7);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    z-index:200; gap:14px;
+  }
+  .loading-overlay.hidden { display:none; }
+  .spinner {
+    width:44px; height:44px; border:4px solid rgba(255,255,255,.2);
+    border-top-color:white; border-radius:50%; animation:spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .loading-text { color:white; font-size:15px; font-weight:600; }
+
+  /* ─────────────────────────────────────────
+     LOCKED BANNER
+  ───────────────────────────────────────── */
+  .locked-banner {
+    background: linear-gradient(135deg,#15803d,#166534);
+    padding: 14px 18px; flex-shrink:0;
+    display:flex; align-items:center; gap:10px;
+  }
+  .locked-banner.hidden { display:none; }
+  .locked-icon { font-size:22px; }
+  .locked-info { flex:1; }
+  .locked-title { color:white; font-size:14px; font-weight:700; }
+  .locked-time  { color:rgba(255,255,255,.75); font-size:11px; margin-top:2px; }
+</style>
+</head>
+<body>
+<div class="phone-frame">
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span class="status-time" id="clock">9:41</span>
+    <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="header-title">📦 สั่งสต็อก</div>
+        <div class="header-date" id="hdate">สาขา หาดใหญ่</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab(0,this)">กงสิ</button>
+    <button class="tab-btn"        onclick="switchTab(1,this)">ทั่วไป</button>
+    <button class="tab-btn"        onclick="switchTab(2,this)">ออนไลน์</button>
+    <button class="tab-btn"        onclick="switchTab(3,this)">PK BKK</button>
+    <button class="tab-btn"        onclick="switchTab(4,this)">พร้อมเพย์</button>
+  </div>
+
+  <!-- Summary Bar -->
+  <div class="summary-bar">
+    <span class="summary-text">กรอกจำนวนที่ต้องการสั่ง</span>
+    <span class="summary-count" id="tab-count">0 / 0</span>
+  </div>
+
+  <!-- Content -->
+  <div class="content" id="content-area">
+
+    <!-- ═══════════════════════════════════════
+         TAB 0: กงสิ  (วัตถุดิบกงสี)
+    ════════════════════════════════════════ -->
+    <div class="tab-panel active" id="tab-0">
+      <div class="section-label">วัตถุดิบกงสิ</div>
+
+      <!-- ไข่มุกดำ (ลัง + ถุง) -->
+      <div class="item-group" id="g-pearlblack">
+        <div class="item-group-name" id="g-pearlblack-label">🫧 ไข่มุกดำ</div>
+        <div class="item-row" data-tab="กงสิ" data-name="ไข่มุกดำ" data-sub="ลัง">
+          <div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ลัง</div></div>
+          <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('g-pearlblack')"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+        </div>
+        <div class="item-row" data-tab="กงสิ" data-name="ไข่มุกดำ" data-sub="ถุง">
+          <div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ถุง</div></div>
+          <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('g-pearlblack')"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+        </div>
+      </div>
+
+      <div class="item-row" data-tab="กงสิ" data-name="ใบชาแดง" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">ใบชาแดง</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="กงสิ" data-name="ใบชาเขียว" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">ใบชาเขียว</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="กงสิ" data-name="ใบมะลิ" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">ใบมะลิ</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="กงสิ" data-name="ใบชาไทย" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">ใบชาไทย</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="กงสิ" data-name="ผงโอเลี้ยง" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">ผงโอเลี้ยง</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="กงสิ" data-name="ผงครีมชีส" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">ผงครีมชีส</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="กงสิ" data-name="ซอสบราวน์ชูการ์" data-unit="แกลลอน">
+        <div class="item-info"><div class="item-name">ซอสบราวน์ชูการ์</div><div class="item-unit">แกลลอน</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="กงสิ" data-name="ไซรัปแดงโบราณ" data-unit="แกลลอน">
+        <div class="item-info"><div class="item-name">ไซรัปแดงโบราณ</div><div class="item-unit">แกลลอน</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="กงสิ" data-name="ฝาซีลแก้ว" data-unit="ม้วน">
+        <div class="item-info"><div class="item-name">ฝาซีลแก้ว</div><div class="item-unit">ม้วน</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+
+      <!-- แก้ว (แถว + ลัง) -->
+      <div class="item-group" id="g-glass">
+        <div class="item-group-name" id="g-glass-label">🥤 แก้ว</div>
+        <div class="item-row" data-tab="กงสิ" data-name="แก้ว" data-sub="แถว">
+          <div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">แถว</div></div>
+          <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('g-glass')"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+        </div>
+        <div class="item-row" data-tab="กงสิ" data-name="แก้ว" data-sub="ลัง">
+          <div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ลัง</div></div>
+          <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('g-glass')"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+        </div>
+      </div>
+
+      <div class="item-row" data-tab="กงสิ" data-name="หลอดเล็ก" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">หลอดเล็ก</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="กงสิ" data-name="หลอดไข่มุก" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">หลอดไข่มุก</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="กงสิ" data-name="ไซรัปมะปี๊ด" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">ไซรัปมะปี๊ด</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+    </div><!-- /tab-0 -->
+
+    <!-- ═══════════════════════════════════════
+         TAB 1: ทั่วไป  (วัตถุดิบทั่วไป)
+    ════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-1">
+
+      <div class="section-label">ไซรัปลองบีช</div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ไซรัปลองบีช กลิ่น คาราเมล" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">ไซรัปลองบีช กลิ่น คาราเมล</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ไซรัปลองบีช กลิ่น พีช" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">ไซรัปลองบีช กลิ่น พีช</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ไซรัปลองบีช กลิ่น มิ้นท์" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">ไซรัปลองบีช กลิ่น มิ้นท์</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+
+      <div class="section-label">ไซรัปติ่งฟง</div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ไซรัปติ่งฟง กลิ่น บลูฮาวาย" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">ไซรัปติ่งฟง กลิ่น บลูฮาวาย</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ไซรัปติ่งฟง กลิ่น บลููเบอร์รี่" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">ไซรัปติ่งฟง กลิ่น บลูเบอร์รี่</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ไซรัปติ่งฟง กลิ่น สตอเบอร์รี่" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">ไซรัปติ่งฟง กลิ่น สตอเบอร์รี่</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ไซรัปติ่งฟง กลิ่น แอปเปิ้ล" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">ไซรัปติ่งฟง กลิ่น แอปเปิ้ล</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ไซรัปติ่งฟง กลิ่น ลิ้นจี่" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">ไซรัปติ่งฟง กลิ่น ลิ้นจี่</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ไซรัปติ่งฟง กลิ่น เสาวรส" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">ไซรัปติ่งฟง กลิ่น เสาวรส</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ไซรัปติ่งฟง มะม่วง" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">ไซรัปติ่งฟง มะม่วง</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ไซรัปติ่งฟง สับปะรด" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">ไซรัปติ่งฟง สับปะรด</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ไซรัปติ่งฟง กลิ่นโยเกิร์ต" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">ไซรัปติ่งฟง กลิ่นโยเกิร์ต</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+
+      <div class="section-label">น้ำผลไม้ & น้ำผึ้ง</div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="น้ำผลไม้เข้มข้น ซันควิก รสผลไม้รวม" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">ซันควิก รสผลไม้รวม</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="น้ำผลไม้เข้มข้น ซันควิก รสส้มชนิดเข้มข้น" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">ซันควิก รสส้มชนิดเข้มข้น</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="เฮลส์บลูบอยแดง" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">เฮลส์บลูบอยแดง</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="น้ำผึ้งแท้" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">น้ำผึ้งแท้</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="เจลลี่ฟรุตสลัด กลิ่น ผลไม้รวม" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">เจลลี่ฟรุตสลัด กลิ่น ผลไม้รวม</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+
+      <div class="section-label">ผง</div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ผงโกโก้ ทิวลิป สีเข้ม" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">ผงโกโก้ ทิวลิป สีเข้ม</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ผงไมโล" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">ผงไมโล</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ผงโอวัลติน สูตร 3" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">ผงโอวัลติน สูตร 3</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ผงเนสกาแฟเรดคัพแบบถุง" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">ผงเนสกาแฟเรดคัพแบบถุง</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+
+      <div class="section-label">นม & ครีม</div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="นมจืด เมจิ แกนลอน 2 ลิตร" data-unit="แกลลอน">
+        <div class="item-info"><div class="item-name">นมจืด เมจิ 2 ลิตร</div><div class="item-unit">แกลลอน</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="โซดาร็อคเมาเท้น(สั่งซัพ)" data-unit="ถาด">
+        <div class="item-info"><div class="item-name">โซดาร็อคเมาเท้น</div><div class="item-unit">ถาด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="นมข้นจืด คาเนชั่น เอ็กส์ตร้า 385 กรัม" data-unit="ถาด">
+        <div class="item-info"><div class="item-name">นมข้นจืด คาเนชั่น 385 ก.</div><div class="item-unit">ถาด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="นมข้นหวาน คาเนชั่น 388 กรัม" data-unit="ถาด">
+        <div class="item-info"><div class="item-name">นมข้นหวาน คาเนชั่น 388 ก.</div><div class="item-unit">ถาด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="น้ำตาลมิตรผล กลิ่น คาราเมล" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">น้ำตาลมิตรผล กลิ่น คาราเมล</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="น้ำเชื่อมมิตรผล ถุงสีม่วง" data-unit="ลัง">
+        <div class="item-info"><div class="item-name">น้ำเชื่อมมิตรผล ถุงสีม่วง</div><div class="item-unit">ลัง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ผงครีมเทียม ดรีมมี่ ถุงสีฟ้า" data-unit="ลัง">
+        <div class="item-info"><div class="item-name">ผงครีมเทียม ดรีมมี่ ถุงสีฟ้า</div><div class="item-unit">ลัง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+
+      <div class="section-label">เนื้อผลไม้แช่แข็ง</div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="เนื้อมะม่วงหั่นเต๋าแช่แข็ง" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">เนื้อมะม่วงหั่นเต๋าแช่แข็ง</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="เนื้อส้มแช่แข็ง" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">เนื้อส้มแช่แข็ง</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="เนื้อพีช แช่แข็ง" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">เนื้อพีช แช่แข็ง</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="เนื้อมิกซ์เบอร์รี่ แช่แข็ง" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">เนื้อมิกซ์เบอร์รี่ แช่แข็ง</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+
+      <div class="section-label">ผลไม้กระป๋อง & ท็อปปิ้ง</div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="สับปะรดกระป๋อง McGarratt" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">สับปะรดกระป๋อง McGarratt</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ลำไยกระป๋อง ตรา Savepak" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">ลำไยกระป๋อง ตรา Savepak</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ปีโป้ เยลลี่รวมรสผลไม้ 587.5 กรัม" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">ปีโป้ เยลลี่รวมรสผลไม้</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="โอวัลติน เฟลค (ท๊อปปิ้ง)" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">โอวัลติน เฟลค (ท็อปปิ้ง)</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="เอโร่ถ้วยน้ำจิ้ม+ฝา 3 ออนซ์*50" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">เอโร่ถ้วยน้ำจิ้ม+ฝา 3 ออนซ์</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+
+      <div class="section-label">บรรจุภัณฑ์</div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="กระดาษปริ้นความร้อน ขนาด 80*80 มม." data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">กระดาษปริ้นความร้อน 80×80</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="กระดาษปริ้นความร้อน ขนาด 57*38 มม." data-unit="ม้วน">
+        <div class="item-info"><div class="item-name">กระดาษปริ้นความร้อน 57×38</div><div class="item-unit">ม้วน</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ถุงใส่แก้วน้ำ 1 ช่อง" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">ถุงใส่แก้วน้ำ 1 ช่อง</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ถุงหิ้วชนิด ใส เหนียวขนาด 6*14" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">ถุงหิ้ว ใส เหนียว 6×14</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ถุงหิ้วชนิด ใส เหนียวขนาด 8*16" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">ถุงหิ้ว ใส เหนียว 8×16</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ถุงหิ้วชนิด ใส เหนียวขนาด 9*18" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">ถุงหิ้ว ใส เหนียว 9×18</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ถุงใส่ชาแบบขุ่น ขนาด 16*26" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">ถุงใส่ชาแบบขุ่น 16×26</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ถ้วยใส่ท็อปปิ้ง ขนาด 2 ออนซ์" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">ถ้วยใส่ท็อปปิ้ง 2 ออนซ์</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ถุงซิปล็อคขนาด 15*21" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">ถุงซิปล็อค 15×21</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ยางวงเส้นใหญ่" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">ยางวงเส้นใหญ่</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ถุงขยะแบบหนา ขนาด 30*40  Hero" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">ถุงขยะแบบหนา 30×40 Hero</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="กระดาษทิสชู่เอนกประสงค์ (6 ม้วน)" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">กระดาษทิสชู่เอนกประสงค์ 6 ม้วน</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+
+      <div class="section-label">น้ำยาทำความสะอาด</div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="น้ำยาล้างจาน" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">น้ำยาล้างจาน</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="น้ำยาถูพื้น" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">น้ำยาถูพื้น</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="ฝาโดม ขนาดปาก 95 รูใหญ่" data-unit="แถว">
+        <div class="item-info"><div class="item-name">ฝาโดม ขนาดปาก 95 รูใหญ่</div><div class="item-unit">แถว</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ทั่วไป" data-name="น้ำยาทำความสะอาดเคาน์เตอร์เอนกประสงค์" data-unit="ขวด">
+        <div class="item-info"><div class="item-name">น้ำยาทำความสะอาดเคาน์เตอร์</div><div class="item-unit">ขวด</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+
+    </div><!-- /tab-1 -->
+
+    <!-- ═══════════════════════════════════════
+         TAB 2: ออนไลน์
+    ════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-2">
+      <div class="section-label">ออนไลน์</div>
+      <div class="item-row" data-tab="ออนไลน์" data-name="ผงเผือก อี้เหวิน" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">ผงเผือก อี้เหวิน</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ออนไลน์" data-name="เนื้อมะปี๊ด" data-unit="กิโลกรัม">
+        <div class="item-info"><div class="item-name">เนื้อมะปี๊ด</div><div class="item-unit">กิโลกรัม</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ออนไลน์" data-name="บุกป๊อปรสลิ้นจี่ ยี่ห้อเทนจู" data-unit="กระปุก">
+        <div class="item-info"><div class="item-name">บุกป๊อปรสลิ้นจี่ เทนจู</div><div class="item-unit">กระปุก</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ออนไลน์" data-name="บุุกป๊อปรสสตอเบอรี่ ยี่ห้อเทนจู" data-unit="กระปุก">
+        <div class="item-info"><div class="item-name">บุกป๊อปรสสตอเบอรี่ เทนจู</div><div class="item-unit">กระปุก</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ออนไลน์" data-name="บุกป๊อปรสยูสุ ยี่ห้อเทนจู" data-unit="กระปุก">
+        <div class="item-info"><div class="item-name">บุกป๊อปรสยูสุ เทนจู</div><div class="item-unit">กระปุก</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ออนไลน์" data-name="วุ้นมะพร้าวเม็ดเล็ก ยี่ห้อ ทีอีเอ" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">วุ้นมะพร้าวเม็ดเล็ก ทีอีเอ</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="ออนไลน์" data-name="ผงพุดดิ้งไข่ ยี่ห้อ POSSMEI" data-unit="ถุง">
+        <div class="item-info"><div class="item-name">ผงพุดดิ้งไข่ POSSMEI</div><div class="item-unit">ถุง</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+    </div><!-- /tab-2 -->
+
+    <!-- ═══════════════════════════════════════
+         TAB 3: PK BKK  (บุกติ่งฟง)
+    ════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-3">
+      <div class="section-label">PK พาณิชย์ BKK</div>
+
+      <!-- บุกติ่งฟง รสน้ำตาล -->
+      <div class="item-group" id="g-buk1">
+        <div class="item-group-name" id="g-buk1-label">🧊 บุกติ่งฟง รสน้ำตาล</div>
+        <div class="item-row" data-tab="PK BKK" data-name="บุกติ่งฟง รสน้ำตาล" data-sub="ลัง">
+          <div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ลัง</div></div>
+          <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('g-buk1')"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+        </div>
+        <div class="item-row" data-tab="PK BKK" data-name="บุกติ่งฟง รสน้ำตาล" data-sub="ถุง">
+          <div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ถุง</div></div>
+          <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('g-buk1')"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+        </div>
+      </div>
+
+      <!-- บุกติ่งฟง รสน้ำผึ้ง -->
+      <div class="item-group" id="g-buk2">
+        <div class="item-group-name" id="g-buk2-label">🧊 บุกติ่งฟง รสน้ำผึ้ง</div>
+        <div class="item-row" data-tab="PK BKK" data-name="บุกติ่งฟง รสน้ำผึ้ง" data-sub="ลัง">
+          <div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ลัง</div></div>
+          <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('g-buk2')"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+        </div>
+        <div class="item-row" data-tab="PK BKK" data-name="บุกติ่งฟง รสน้ำผึ้ง" data-sub="ถุง">
+          <div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ถุง</div></div>
+          <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('g-buk2')"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+        </div>
+      </div>
+
+      <!-- บุกติ่งฟง รสบราวน์ชูการ์ -->
+      <div class="item-group" id="g-buk3">
+        <div class="item-group-name" id="g-buk3-label">🧊 บุกติ่งฟง รสบราวน์ชูการ์</div>
+        <div class="item-row" data-tab="PK BKK" data-name="บุกติ่งฟง รสบราวน์ชูการ์" data-sub="ลัง">
+          <div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ลัง</div></div>
+          <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('g-buk3')"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+        </div>
+        <div class="item-row" data-tab="PK BKK" data-name="บุกติ่งฟง รสบราวน์ชูการ์" data-sub="ถุง">
+          <div class="item-info"><div class="item-name" style="font-size:12px;font-weight:500;color:var(--gray-600)">ถุง</div></div>
+          <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this);updGrp('g-buk3')"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+        </div>
+      </div>
+    </div><!-- /tab-3 -->
+
+    <!-- ═══════════════════════════════════════
+         TAB 4: พร้อมเพย์
+    ════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-4">
+      <div class="section-label">พร้อมเพย์</div>
+      <div class="item-row" data-tab="พร้อมเพย์" data-name="กระดาษครอบฝาแก้ว" data-unit="แพ็ค">
+        <div class="item-info"><div class="item-name">กระดาษครอบฝาแก้ว</div><div class="item-unit">แพ็ค</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="พร้อมเพย์" data-name="บ๊วยดอง กระปุกใหญ่" data-unit="กระปุก">
+        <div class="item-info"><div class="item-name">บ๊วยดอง กระปุกใหญ่</div><div class="item-unit">กระปุก</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+      <div class="item-row" data-tab="พร้อมเพย์" data-name="มะนาว" data-unit="ลูก">
+        <div class="item-info"><div class="item-name">มะนาว</div><div class="item-unit">ลูก</div></div>
+        <div class="stepper"><button class="step-btn" onclick="adj(this,-1)">−</button><input class="step-input" value="0" type="number" min="0" oninput="chg(this)"><button class="step-btn" onclick="adj(this,1)">+</button></div>
+      </div>
+    </div><!-- /tab-4 -->
+
+  </div><!-- /content -->
+
+  <!-- Locked Banner (hidden by default) -->
+  <div class="locked-banner hidden" id="locked-banner">
+    <div class="locked-icon">🔒</div>
+    <div class="locked-info">
+      <div class="locked-title" id="locked-title">ล็อคสต็อคแล้ว</div>
+      <div class="locked-time"  id="locked-time">—</div>
+    </div>
+  </div>
+
+  <!-- Bottom Bar -->
+  <div class="bottom-bar" id="bottom-bar">
+    <div class="bottom-row">
+      <span class="bottom-label">รายการที่กรอกแล้ว</span>
+      <span class="bottom-count" id="total-filled">0 รายการ</span>
+    </div>
+    <textarea class="note-field" id="note-field" placeholder="💬 อยากได้อะไรเพิ่มเป็นพิเศษ?" rows="2"></textarea>
+    <button class="btn-lock" id="btn-lock" onclick="openLockModal()">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      ยืนยัน &amp; ล็อคสต็อครอบนี้
+    </button>
+  </div>
+
+  <!-- ── Lock Review Modal ── -->
+  <div class="lock-overlay hidden" id="lock-overlay">
+    <div class="lock-sheet">
+      <div class="lock-drag"></div>
+      <div class="lock-title">🔒 ยืนยันล็อคสต็อค</div>
+      <div class="lock-subtitle" id="lock-subtitle">สาขา หาดใหญ่</div>
+      <div class="lock-items-wrap">
+        <div id="lock-items-body"><!-- filled dynamically --></div>
+      </div>
+      <div class="lock-note-display" id="lock-note-display"></div>
+      <div class="lock-warning">⚠️ เมื่อยืนยันแล้ว จะแก้ไขข้อมูลรอบนี้ไม่ได้อีก</div>
+      <div class="lock-buttons">
+        <button class="btn-cancel"  onclick="closeLockModal()">← แก้ไข</button>
+        <button class="btn-confirm" id="btn-confirm" onclick="confirmAndSend()">✅ ยืนยัน & ล็อค</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Loading Overlay ── -->
+  <div class="loading-overlay hidden" id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text">กำลังส่งข้อมูล…</div>
+  </div>
+
+</div><!-- /phone-frame -->
+
+<script>
+// ══════════════════════════════════════════
+//  ⚙️  CONFIG — ใส่ URL จาก n8n ตรงนี้
+// ══════════════════════════════════════════
+const N8N_WEBHOOK_URL = 'https://n8n.srv1037034.hstgr.cloud/webhook/ks-stock';
+//   ^ วางลิงก์ Webhook จาก n8n Cloud ตรงนี้เลย
+//   ตัวอย่าง: 'https://xxxx.app.n8n.cloud/webhook/ks-stock'
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let currentTab   = 0;
+let isLocked     = false;
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+(function init() {
+  const d   = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const thY = d.getFullYear() - 2500 + 543;
+  document.getElementById('hdate').textContent =
+    `สาขา หาดใหญ่ · ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${thY}`;
+  document.getElementById('clock').textContent =
+    pad(d.getHours()) + ':' + pad(d.getMinutes());
+  updateTabCount();
+})();
+
+// ══════════════════════════════════════════
+//  TAB
+// ══════════════════════════════════════════
+function switchTab(idx, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + idx).classList.add('active');
+  btn.classList.add('active');
+  currentTab = idx;
+  updateTabCount();
+}
+
+// ══════════════════════════════════════════
+//  STEPPER
+// ══════════════════════════════════════════
+function adj(btn, delta) {
+  if (isLocked) return;
+  const input = btn.parentElement.querySelector('.step-input');
+  input.value = Math.max(0, (parseInt(input.value) || 0) + delta);
+  updateRow(input);
+}
+function chg(input) { if (!isLocked) updateRow(input); }
+
+function updateRow(input) {
+  input.closest('.item-row').classList.toggle('has-value', (parseInt(input.value)||0) > 0);
+  updateCounts();
+}
+function updateCounts() {
+  let total = 0;
+  document.querySelectorAll('.step-input').forEach(i => {
+    if ((parseInt(i.value)||0) > 0) total++;
+  });
+  document.getElementById('total-filled').textContent = total + ' รายการ';
+  updateTabCount();
+}
+function updateTabCount() {
+  const panel  = document.getElementById('tab-' + currentTab);
+  const inputs = panel.querySelectorAll('.step-input');
+  let filled   = 0;
+  inputs.forEach(i => { if ((parseInt(i.value)||0) > 0) filled++; });
+  document.getElementById('tab-count').textContent = filled + ' / ' + inputs.length;
+}
+function updGrp(id) {
+  const grp   = document.getElementById(id);
+  const label = document.getElementById(id + '-label');
+  label.classList.toggle('any-filled',
+    [...grp.querySelectorAll('.step-input')].some(i => (parseInt(i.value)||0) > 0));
+}
+
+// ══════════════════════════════════════════
+//  EXTRACT DATA
+// ══════════════════════════════════════════
+function extractData() {
+  const items = [];
+  document.querySelectorAll('.item-row').forEach(row => {
+    const input = row.querySelector('.step-input');
+    if (!input) return;
+    const qty = parseInt(input.value) || 0;
+    if (qty === 0) return;            // ส่งเฉพาะรายการที่กรอก
+    const tab  = row.dataset.tab  || '';
+    const name = row.dataset.name || '';
+    const sub  = row.dataset.sub  || '';
+    const unit = row.dataset.unit || sub;
+    items.push({ tab, name, sub, unit, qty });
+  });
+  return items;
+}
+
+// ══════════════════════════════════════════
+//  LOCK MODAL
+// ══════════════════════════════════════════
+function openLockModal() {
+  if (isLocked) return;
+  const items = extractData();
+  const note  = document.getElementById('note-field').value.trim();
+
+  // build review list
+  const body = document.getElementById('lock-items-body');
+  body.innerHTML = '';
+  if (items.length === 0) {
+    body.innerHTML = '<div class="lock-empty">ยังไม่ได้กรอกรายการใดเลย</div>';
+  } else {
+    let prevTab = null;
+    items.forEach(item => {
+      if (item.tab !== prevTab) {
+        const lbl = document.createElement('div');
+        lbl.className = 'lock-tab-label';
+        lbl.textContent = item.tab;
+        body.appendChild(lbl);
+        prevTab = item.tab;
+      }
+      const row  = document.createElement('div');
+      row.className = 'lock-item-row';
+      const label = item.sub ? `${item.name} (${item.sub})` : `${item.name} (${item.unit})`;
+      row.innerHTML =
+        `<span class="lock-item-name">${label}</span>
+         <span class="lock-item-qty">${item.qty}</span>`;
+      body.appendChild(row);
+    });
+  }
+
+  // note
+  const noteEl = document.getElementById('lock-note-display');
+  if (note) {
+    noteEl.textContent = '💬 ' + note;
+    noteEl.style.display = 'block';
+  } else {
+    noteEl.style.display = 'none';
+  }
+
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const thY = now.getFullYear() - 2500 + 543;
+  document.getElementById('lock-subtitle').textContent =
+    `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${thY} · สาขา หาดใหญ่`;
+
+  document.getElementById('lock-overlay').classList.remove('hidden');
+}
+
+function closeLockModal() {
+  document.getElementById('lock-overlay').classList.add('hidden');
+}
+
+// ══════════════════════════════════════════
+//  CONFIRM & SEND TO n8n
+// ══════════════════════════════════════════
+async function confirmAndSend() {
+  const btnConfirm = document.getElementById('btn-confirm');
+  btnConfirm.disabled = true;
+  closeLockModal();
+  document.getElementById('loading-overlay').classList.remove('hidden');
+
+  const payload = {
+    branch       : 'หาดใหญ่',
+    submitted_at : new Date().toISOString(),
+    note         : document.getElementById('note-field').value.trim(),
+    items        : extractData()
+  };
+
+  try {
+    const resp = await fetch(N8N_WEBHOOK_URL, {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body   : JSON.stringify(payload)
+    });
+
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
+    // ─ SUCCESS ─
+    lockUI(payload);
+
+  } catch (err) {
+    // ─ ERROR ─
+    document.getElementById('loading-overlay').classList.add('hidden');
+    btnConfirm.disabled = false;
+    alert('❌ ส่งข้อมูลไม่สำเร็จ\n\nกรุณาลองใหม่อีกครั้ง\n(' + err.message + ')');
+  }
+}
+
+// ══════════════════════════════════════════
+//  LOCK UI
+// ══════════════════════════════════════════
+function lockUI(payload) {
+  isLocked = true;
+
+  // hide loading
+  document.getElementById('loading-overlay').classList.add('hidden');
+
+  // disable all inputs & buttons
+  document.querySelectorAll('.step-input').forEach(i => { i.disabled = true; });
+  document.querySelectorAll('.step-btn').forEach(b  => { b.disabled = true; });
+  document.getElementById('note-field').disabled = true;
+  document.getElementById('btn-lock').disabled   = true;
+  document.getElementById('btn-lock').textContent = '🔒 ล็อคแล้ว';
+
+  // show locked banner
+  const now   = new Date();
+  const pad   = n => String(n).padStart(2,'0');
+  const thY   = now.getFullYear() - 2500 + 543;
+  const timeStr =
+    `${pad(now.getDate())}/${pad(now.getMonth()+1)}/${thY} ` +
+    `เวลา ${pad(now.getHours())}:${pad(now.getMinutes())} น.`;
+
+  document.getElementById('locked-title').textContent = '🔒 ล็อคสต็อคแล้ว';
+  document.getElementById('locked-time').textContent  = timeStr;
+  document.getElementById('locked-banner').classList.remove('hidden');
+
+  // scroll to top
+  document.getElementById('content-area').scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
