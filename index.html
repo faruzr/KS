@@ -882,6 +882,11 @@
 // ══════════════════════════════════════════
 const STOCK_SUBMIT_API_URL = 'https://tpeipvacrtdligxhfomd.supabase.co/functions/v1/submit-stock';
 
+function thaiISO(d = new Date()) {
+  const thai = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+  return thai.toISOString().replace('Z', '+07:00');
+}
+
 // ══════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════
@@ -1063,7 +1068,7 @@ async function confirmAndSend() {
 
   const payload = {
     branch       : 'หาดใหญ่',
-    submitted_at : new Date().toISOString(),
+    submitted_at : thaiISO(),
     note         : document.getElementById('note-field').value.trim(),
     items        : extractData()
   };
@@ -1126,7 +1131,7 @@ function initSwipe() {
 //  AUTO-SAVE DRAFT
 // ══════════════════════════════════════════
 function saveDraft() {
-  const draft = { savedAt: new Date().toISOString(), note: '', values: {} };
+  const draft = { savedAt: thaiISO(), note: '', values: {} };
   document.querySelectorAll('.item-row').forEach(row => {
     row.querySelectorAll('.unit-stepper, .item-row').forEach(() => {});
     if (row.classList.contains('dual-unit')) {
