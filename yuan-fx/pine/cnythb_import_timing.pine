@@ -1,0 +1,129 @@
+// ════════════════════════════════════════════════════════════════════════
+//  CNY/THB Import Payment Timing Helper  (เครื่องมือจับจังหวะแลกบาท→หยวน)
+//  สำหรับ "ผู้นำเข้า" ที่ต้องจ่ายซัพพลายเออร์จีนเป็นเงินหยวนแบบประจำสม่ำเสมอ
+//  ─ ไม่ใช่บอทเก็งกำไร แต่เป็นตัวช่วยตัดสินใจว่า "งวดนี้ควรแลกมาก/น้อย/รอ"
+//
+//  หลักคิด:
+//   • ราคา CNYTHB = "บาทต่อหยวน 1 หน่วย"  →  ค่ายิ่งต่ำ = หยวนยิ่งถูก = ดีต่อผู้ซื้อ
+//   • ใช้ Dollar-Cost-Averaging (DCA) เป็นฐาน แล้ว "เอียงน้ำหนัก" ตามความถูก/แพง
+//     เทียบกับค่าเฉลี่ยย้อนหลัง (z-score + percentile)
+//   • ใส่เรทกสิกร (KBank TT Sell) เองได้ เพื่อดูส่วนต่าง (spread) ที่แบงก์คิด
+//
+//  วิธีใช้: เปิดกราฟสัญลักษณ์  FX_IDC:CNYTHB  (Timeframe = 1D)  แล้ว Add this indicator
+//  ออกแบบบน Pine Script v5
+// ════════════════════════════════════════════════════════════════════════
+//@version=5
+indicator("CNY/THB Import Timing Helper", shorttitle="CNYTHB Timing", overlay=true, max_labels_count=500)
+
+// ─────────────────────────── INPUTS ───────────────────────────
+grpModel = "⚙️ พารามิเตอร์โมเดล"
+maLen     = input.int(120,  "ความยาวค่าเฉลี่ยอ้างอิง (วัน)", minval=10, maxval=400, group=grpModel, tooltip="ใช้เป็น 'ราคายุติธรรม' อ้างอิง ~ครึ่งปีทำการ")
+zLen      = input.int(120,  "ช่วงคำนวณ Z-score / Percentile", minval=20, maxval=400, group=grpModel)
+zStrong   = input.float(1.5,"เกณฑ์ Z 'ถูก/แพงมาก'", minval=0.5, step=0.1, group=grpModel)
+zMild     = input.float(0.5,"เกณฑ์ Z 'ถูก/แพงเล็กน้อย'", minval=0.1, step=0.1, group=grpModel)
+rsiLen    = input.int(14,   "RSI length (ยืนยันโมเมนตัม)", minval=2, group=grpModel)
+
+grpBudget = "💰 งบจ่ายต่อรอบ"
+baseBudgetTHB = input.float(100000, "งบปกติต่อรอบ (บาท)", minval=0, step=1000, group=grpBudget, tooltip="งบที่ตั้งใจแลกต่อหนึ่งงวดตามแผน DCA")
+
+grpKBank  = "🏦 เทียบเรทกสิกร (กรอกเอง)"
+kbankRate = input.float(0.0, "KBank TT Sell CNY (บาท/หยวน)", minval=0, step=0.0001, group=grpKBank, tooltip="ดูได้ที่ kasikornbank.com > Foreign Exchange > CNY ช่อง Selling (TT). กรอก 0 ถ้าไม่ต้องการเทียบ")
+
+grpView   = "👁️ การแสดงผล"
+showBG    = input.bool(true,  "ระบายสีพื้นหลังโซน", group=grpView)
+showBands = input.bool(true,  "แสดงแถบ ±Z (กรอบถูก/แพง)", group=grpView)
+showPanel = input.bool(true,  "แสดงตารางสรุป", group=grpView)
+
+// ─────────────────────────── CORE CALC ───────────────────────────
+src   = close
+basis = ta.sma(src, maLen)                       // ราคายุติธรรมอ้างอิง
+dev   = ta.stdev(src, zLen)
+z     = dev > 0 ? (src - basis) / dev : 0.0      // z-score: ติดลบ = หยวนถูกกว่าค่าเฉลี่ย
+rsi   = ta.rsi(src, rsiLen)
+
+// percentile rank ของราคาปัจจุบันในช่วง zLen (0 = ถูกสุด, 100 = แพงสุด)
+pctRank = ta.percentrank(src, zLen)
+
+// แถบกรอบ
+upperStrong = basis + zStrong * dev
+upperMild   = basis + zMild   * dev
+lowerMild   = basis - zMild   * dev
+lowerStrong = basis - zStrong * dev
+
+// ─────────────────────────── DECISION LOGIC ───────────────────────────
+// คืนค่า: ระดับการแลก (tilt) เป็น % ของงบปกติ + ข้อความ + สี
+// price ต่ำ (z ติดลบมาก) = หยวนถูก = แลกเพิ่ม
+string action  = ""
+float  tilt    = 1.0           // ตัวคูณงบ (1.0 = ปกติ)
+color  zoneCol = color.gray
+
+if z <= -zStrong
+    action := "หยวนถูกมาก → แลกเพิ่ม / front-load งวดหน้า"
+    tilt   := 2.0
+    zoneCol := color.new(color.teal, 0)
+else if z <= -zMild
+    action := "หยวนถูกกว่าค่าเฉลี่ย → แลกตามปกติ +เพิ่มเล็กน้อย"
+    tilt   := 1.3
+    zoneCol := color.new(color.green, 0)
+else if z < zMild
+    action := "ปกติ → แลกตามแผน DCA"
+    tilt   := 1.0
+    zoneCol := color.new(color.gray, 0)
+else if z < zStrong
+    action := "หยวนแพง → แลกเท่าที่จำเป็น / เลื่อนถ้าได้"
+    tilt   := 0.7
+    zoneCol := color.new(color.orange, 0)
+else
+    action := "หยวนแพงมาก → แลกขั้นต่ำ รอจังหวะ"
+    tilt   := 0.4
+    zoneCol := color.new(color.red, 0)
+
+suggestBudget = baseBudgetTHB * tilt
+// โมเมนตัม: ถ้า RSI < 35 (ราคา/หยวนกำลังอ่อน) เสริมความมั่นใจฝั่ง "แลกเพิ่ม"
+momentumNote = rsi < 35 ? "RSI ต่ำ: หยวนกำลังอ่อน (หนุนการแลก)" : rsi > 65 ? "RSI สูง: หยวนแข็ง (ระวัง)" : "RSI กลาง ๆ"
+
+// ─────────────────────────── PLOTS ───────────────────────────
+plot(basis, "ราคายุติธรรม (SMA)", color=color.new(color.blue, 0), linewidth=2)
+pU = plot(showBands ? upperStrong : na, "แพงมาก", color=color.new(color.red, 60))
+pUm= plot(showBands ? upperMild   : na, "แพงเล็กน้อย", color=color.new(color.orange, 70))
+pLm= plot(showBands ? lowerMild   : na, "ถูกเล็กน้อย", color=color.new(color.green, 70))
+pL = plot(showBands ? lowerStrong : na, "ถูกมาก", color=color.new(color.teal, 60))
+fill(pU, pUm, color=color.new(color.red, 92), title="โซนแพง")
+fill(pLm, pL, color=color.new(color.teal, 92), title="โซนถูก")
+
+bgcolor(showBG ? color.new(zoneCol, 88) : na, title="พื้นหลังโซน")
+
+// จุดแจ้งเตือนบนกราฟเมื่อเข้าโซนถูกมาก / ตัดลงใต้แถบถูก
+buyMore = ta.crossunder(src, lowerStrong)
+plotshape(buyMore, "เข้าโซนถูกมาก", shape.triangleup, location.belowbar, color.teal, size=size.small, text="แลกเพิ่ม")
+
+// ─────────────────────────── ALERTS ───────────────────────────
+alertcondition(ta.crossunder(z, -zStrong), "หยวนถูกมาก (Z<-1.5)", "CNYTHB: หยวนถูกมาก — พิจารณาแลกเพิ่ม/front-load")
+alertcondition(ta.crossunder(z, -zMild),   "หยวนเริ่มถูก (Z<-0.5)", "CNYTHB: หยวนถูกกว่าค่าเฉลี่ย — แลกตามปกติ+เพิ่มเล็กน้อย")
+alertcondition(ta.crossover(z,  zStrong),  "หยวนแพงมาก (Z>1.5)",   "CNYTHB: หยวนแพงมาก — แลกขั้นต่ำ รอจังหวะ")
+// alert รวมแบบ dynamic (ใช้ alert() ตอนแท่งปิด)
+if barstate.isconfirmed and (buyMore or ta.crossover(z, zStrong))
+    alert("CNYTHB Timing: " + action + " | Z=" + str.tostring(z, "#.##") + " | Pctile=" + str.tostring(pctRank, "#") + "%", alert.freq_once_per_bar_close)
+
+// ─────────────────────────── INFO PANEL ───────────────────────────
+// helper ประกาศใน global scope (Pine v5 ไม่อนุญาตให้ประกาศฟังก์ชันในบล็อก if)
+f_row(_t, _i, _k, _v, _c) =>
+    table.cell(_t, 0, _i, _k, text_color=color.white, text_size=size.small, bgcolor=color.new(color.black, 20), text_halign=text.align_left)
+    table.cell(_t, 1, _i, _v, text_color=_c, text_size=size.small, bgcolor=color.new(color.black, 40), text_halign=text.align_right)
+
+var table t = table.new(position.top_right, 2, 9, border_width=1)
+if showPanel and barstate.islast
+    spreadPct = kbankRate > 0 ? (kbankRate - src) / src * 100 : na
+    f_row(t, 0, "เรทตลาด (CNYTHB)", str.tostring(src, "#.####"), color.white)
+    f_row(t, 1, "ราคายุติธรรม (SMA" + str.tostring(maLen) + ")", str.tostring(basis, "#.####"), color.aqua)
+    f_row(t, 2, "Z-score", str.tostring(z, "#.##"), z < 0 ? color.lime : color.orange)
+    f_row(t, 3, "Percentile (รอบ" + str.tostring(zLen) + ")", str.tostring(pctRank, "#") + "% " + (pctRank < 50 ? "(ถูก)" : "(แพง)"), pctRank < 50 ? color.lime : color.orange)
+    f_row(t, 4, "RSI(" + str.tostring(rsiLen) + ")", str.tostring(rsi, "#"), color.white)
+    f_row(t, 5, "คำแนะนำ", action, color.yellow)
+    f_row(t, 6, "งบแนะนำงวดนี้", str.tostring(suggestBudget, "#,###") + " บาท (x" + str.tostring(tilt, "#.#") + ")", color.lime)
+    if kbankRate > 0
+        f_row(t, 7, "KBank TT Sell", str.tostring(kbankRate, "#.####"), color.white)
+        f_row(t, 8, "ส่วนต่างจากตลาด", "+" + str.tostring(spreadPct, "#.##") + "%", spreadPct > 2.0 ? color.orange : color.lime)
+    else
+        f_row(t, 7, "KBank TT Sell", "— (กรอกใน settings)", color.gray)
+        f_row(t, 8, "หมายเหตุ", momentumNote, color.gray)
