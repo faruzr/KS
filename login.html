@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>เข้าสู่ระบบ Admin - KS Stock</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root {
+    --blue-950:#081b3a;
+    --blue-900:#0f2d5e;
+    --blue-700:#1a4a9c;
+    --blue-500:#2563eb;
+    --blue-100:#dbeafe;
+    --blue-50:#eff6ff;
+    --green-600:#16a34a;
+    --red-500:#ef4444;
+    --red-50:#fef2f2;
+    --gray-50:#f8fafc;
+    --gray-100:#f1f5f9;
+    --gray-200:#e2e8f0;
+    --gray-400:#94a3b8;
+    --gray-600:#475569;
+    --gray-800:#1e293b;
+    --white:#ffffff;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    min-height:100vh; padding:20px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Sarabun',sans-serif;
+    background:
+      radial-gradient(circle at 12% 15%, rgba(59,130,246,.24), transparent 32%),
+      radial-gradient(circle at 80% 12%, rgba(22,163,74,.16), transparent 26%),
+      linear-gradient(145deg, #111827, #0b1120 58%, #172554);
+  }
+  .phone-frame {
+    width:390px; min-height:700px; overflow:hidden;
+    display:flex; flex-direction:column;
+    background:var(--gray-50); border-radius:48px;
+    box-shadow:0 40px 80px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,255,255,.12);
+  }
+  .hero {
+    padding:44px 28px 32px;
+    color:white;
+    background:
+      linear-gradient(135deg, rgba(37,99,235,.92), rgba(15,45,94,.98)),
+      radial-gradient(circle at top right, rgba(255,255,255,.35), transparent 34%);
+  }
+  .eyebrow {
+    color:rgba(255,255,255,.68); font-size:11px; font-weight:700;
+    letter-spacing:1.2px; text-transform:uppercase; margin-bottom:10px;
+  }
+  h1 { font-size:27px; line-height:1.18; font-weight:700; margin-bottom:10px; }
+  .subtitle { color:rgba(255,255,255,.78); font-size:13px; line-height:1.6; }
+  .content {
+    flex:1; padding:26px 24px 30px;
+    display:flex; flex-direction:column; gap:16px;
+  }
+  .field { display:flex; flex-direction:column; gap:7px; }
+  label { font-size:12px; color:var(--gray-600); font-weight:700; }
+  input {
+    width:100%; border:1.5px solid var(--gray-200); border-radius:14px;
+    background:white; padding:13px 14px;
+    font-size:15px; color:var(--gray-800); outline:none;
+    font-family:'Sarabun',sans-serif; transition:border-color .18s, box-shadow .18s;
+  }
+  input:focus {
+    border-color:var(--blue-500);
+    box-shadow:0 0 0 4px rgba(37,99,235,.11);
+  }
+  .submit-btn {
+    margin-top:4px; width:100%; border:none; border-radius:15px;
+    padding:14px 16px; color:white;
+    background:linear-gradient(135deg, var(--green-600), #15803d);
+    font-size:15px; font-weight:700; font-family:'Sarabun',sans-serif;
+    cursor:pointer; box-shadow:0 8px 18px rgba(22,163,74,.28);
+  }
+  .submit-btn:disabled { background:#94a3b8; box-shadow:none; cursor:not-allowed; }
+  .message {
+    min-height:20px; padding:10px 12px; border-radius:12px;
+    display:none; font-size:12px; line-height:1.55;
+  }
+  .message.error {
+    display:block; background:var(--red-50); color:#b91c1c; border:1px solid #fecaca;
+  }
+  .message.info {
+    display:block; background:var(--blue-50); color:var(--blue-700); border:1px solid var(--blue-100);
+  }
+  .note {
+    margin-top:auto; padding-top:12px;
+    color:var(--gray-400); font-size:11.5px; line-height:1.6; text-align:center;
+  }
+</style>
+</head>
+<body>
+<main class="phone-frame">
+  <section class="hero">
+    <div class="eyebrow">KS Stock Admin</div>
+    <h1>เข้าสู่ระบบผู้ดูแล</h1>
+    <p class="subtitle">หน้านี้ใช้สำหรับดูรายการสั่งของและยอดรวมรายสัปดาห์ของสาขาหาดใหญ่</p>
+  </section>
+
+  <form class="content" id="login-form">
+    <div class="message info" id="status-msg">กำลังตรวจสอบสถานะ...</div>
+
+    <div class="field">
+      <label for="email">อีเมล</label>
+      <input id="email" name="email" type="email" autocomplete="email" required>
+    </div>
+
+    <div class="field">
+      <label for="password">รหัสผ่าน</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+    </div>
+
+    <button class="submit-btn" id="submit-btn" type="submit">เข้าสู่ระบบ</button>
+
+    <p class="note">บัญชีต้องถูกสร้างใน Supabase Auth และมีสิทธิ์ <strong>ks_stock_admin</strong> ก่อนเข้าใช้งาน</p>
+  </form>
+</main>
+
+<script>
+const SUPABASE_URL = 'https://tpeipvacrtdligxhfomd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwZWlwdmFjcnRkbGlneGhmb21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0NTQ1MDksImV4cCI6MjA4OTAzMDUwOX0.sJdUEmPVppEB6PQaoINbxyc7-vnlMD1Rao4OqIAvMEM';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const ADMIN_ROLES = new Set(['ks_stock_admin', 'admin']);
+
+const form = document.getElementById('login-form');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
+const submitBtn = document.getElementById('submit-btn');
+const statusMsg = document.getElementById('status-msg');
+
+function safeRedirectPath() {
+  const raw = new URLSearchParams(location.search).get('redirect') || 'admin.html';
+  if (/^[a-z][a-z\d+.-]*:/i.test(raw) || raw.startsWith('//')) return 'admin.html';
+  return raw.startsWith('/') ? raw : raw.replace(/^\.\//, '');
+}
+
+function setMessage(text, type = 'info') {
+  statusMsg.textContent = text;
+  statusMsg.className = `message ${type}`;
+}
+
+function hasAdminRole(user) {
+  const meta = user?.app_metadata || {};
+  const roles = Array.isArray(meta.roles) ? meta.roles : [];
+  return ADMIN_ROLES.has(meta.role) || roles.some((role) => ADMIN_ROLES.has(role));
+}
+
+function setBusy(isBusy) {
+  submitBtn.disabled = isBusy;
+  emailInput.disabled = isBusy;
+  passwordInput.disabled = isBusy;
+}
+
+async function boot() {
+  const { data } = await sb.auth.getUser();
+  if (data?.user && hasAdminRole(data.user)) {
+    location.replace(safeRedirectPath());
+    return;
+  }
+
+  if (data?.user) {
+    await sb.auth.signOut();
+    setMessage('บัญชีนี้ยังไม่ได้รับสิทธิ์ Admin กรุณาตั้งค่า app_metadata ก่อน', 'error');
+    return;
+  }
+
+  statusMsg.style.display = 'none';
+}
+
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  setBusy(true);
+  setMessage('กำลังเข้าสู่ระบบ...', 'info');
+
+  const { data, error } = await sb.auth.signInWithPassword({
+    email: emailInput.value.trim(),
+    password: passwordInput.value
+  });
+
+  if (error) {
+    setBusy(false);
+    setMessage(error.message || 'เข้าสู่ระบบไม่สำเร็จ', 'error');
+    return;
+  }
+
+  if (!hasAdminRole(data.user)) {
+    await sb.auth.signOut();
+    setBusy(false);
+    setMessage('บัญชีนี้ยังไม่ได้รับสิทธิ์ Admin กรุณาตั้งค่า app_metadata.roles ให้มี ks_stock_admin', 'error');
+    return;
+  }
+
+  location.replace(safeRedirectPath());
+});
+
+boot();
+</script>
+</body>
+</html>

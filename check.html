@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>นับสต็อกคงเหลือ</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue-900: #0f2d5e; --blue-700: #1a4a9c; --blue-500: #2563eb; --blue-400: #3b82f6;
+    --blue-100: #dbeafe; --blue-50: #eff6ff;
+    --green-600: #16a34a; --green-100: #dcfce7;
+    --amber-600: #b45309; --amber-100: #fef9c3;
+    --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0; --gray-400: #94a3b8;
+    --gray-600: #475569; --gray-800: #1e293b; --white: #ffffff;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    font-family:'Sarabun',sans-serif; background:#1a1a2e;
+    display:flex; justify-content:center; align-items:center; min-height:100vh; padding:20px;
+  }
+  .phone-frame {
+    width:390px; height:844px; background:var(--gray-50); border-radius:48px; overflow:hidden;
+    box-shadow:0 40px 80px rgba(0,0,0,.6), inset 0 0 0 2px rgba(255,255,255,.1);
+    display:flex; flex-direction:column; position:relative;
+  }
+  .status-bar { background:var(--blue-900); padding:14px 28px 8px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; }
+  .status-time { color:white; font-size:15px; font-weight:600; }
+  .status-icons { display:flex; gap:6px; align-items:center; color:white; font-size:12px; }
+  .header { background:var(--blue-900); padding:10px 20px 14px; flex-shrink:0; }
+  .header-title { color:white; font-size:19px; font-weight:700; }
+  .header-date { color:var(--blue-100); font-size:11.5px; opacity:.8; margin-top:2px; }
+  .tab-bar { background:var(--blue-900); padding:8px 10px; flex-shrink:0; overflow-x:auto; scrollbar-width:none; display:flex; gap:4px; }
+  .tab-bar::-webkit-scrollbar { display:none; }
+  .tab-btn { white-space:nowrap; padding:6px 14px; font-size:12px; font-family:'Sarabun',sans-serif; font-weight:500; color:rgba(255,255,255,.55); background:none; border:none; cursor:pointer; border-radius:20px; transition:all .2s; flex-shrink:0; }
+  .tab-btn.active { color:var(--blue-900); background:white; font-weight:700; }
+  .search-bar { background:var(--blue-900); padding:0 12px 10px; flex-shrink:0; }
+  .search-input-wrap { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.12); border-radius:10px; padding:7px 12px; }
+  .search-icon { color:rgba(255,255,255,.5); font-size:13px; flex-shrink:0; }
+  .search-input { flex:1; background:none; border:none; outline:none; font-size:13px; font-family:'Sarabun',sans-serif; color:white; font-weight:500; }
+  .search-input::placeholder { color:rgba(255,255,255,.4); }
+  .search-clear { background:none; border:none; color:rgba(255,255,255,.5); font-size:16px; cursor:pointer; padding:0; line-height:1; display:none; }
+  .summary-bar { background:var(--blue-50); padding:7px 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--gray-200); flex-shrink:0; }
+  .summary-text { font-size:12px; color:var(--gray-600); }
+  .summary-count { font-size:12px; font-weight:700; color:var(--blue-700); background:var(--blue-100); padding:2px 8px; border-radius:10px; }
+  .content { flex:1; overflow-y:auto; padding:8px 13px 6px; scrollbar-width:none; }
+  .content::-webkit-scrollbar { display:none; }
+  .section-label { font-size:10.5px; font-weight:700; color:var(--gray-400); letter-spacing:.8px; text-transform:uppercase; padding:8px 4px 5px; }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+  .item-row { background:white; border-radius:11px; padding:10px 12px; margin-bottom:6px; border:1.5px solid var(--gray-100); transition:border-color .15s,background .15s; }
+  .item-row.has-value { border-color:var(--blue-400); background:var(--blue-50); }
+  .item-row.has-value .item-name { color:var(--blue-700); }
+  .item-top { display:flex; align-items:center; gap:10px; }
+  .item-info { flex:1; min-width:0; }
+  .item-name { font-size:13px; font-weight:600; color:var(--gray-800); line-height:1.35; }
+  .item-hint { font-size:10.5px; color:var(--gray-400); margin-top:2px; line-height:1.4; }
+  .item-hint b { color:var(--blue-700); font-weight:700; }
+  .unit-inputs { display:flex; gap:6px; flex-shrink:0; }
+  .unit-field { display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .unit-field-label { font-size:9.5px; color:var(--gray-600); font-weight:600; }
+  .qty-input { width:56px; height:34px; border:1.5px solid var(--gray-200); border-radius:9px; text-align:center; font-size:15px; font-weight:700; color:var(--gray-800); font-family:'Sarabun',sans-serif; outline:none; background:var(--gray-50); }
+  .qty-input:focus { border-color:var(--blue-400); background:white; }
+  .bottom-bar { background:white; border-top:1px solid var(--gray-200); padding:10px 14px 18px; flex-shrink:0; }
+  .note-field { width:100%; border:1.5px solid var(--gray-200); border-radius:11px; padding:9px 12px; font-size:13px; font-family:'Sarabun',sans-serif; color:var(--gray-800); resize:none; outline:none; margin-bottom:9px; background:var(--gray-50); min-height:44px; max-height:44px; }
+  .note-field:focus { border-color:var(--blue-400); background:var(--blue-50); }
+  .bottom-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .bottom-label { font-size:12px; color:var(--gray-600); }
+  .bottom-count { font-size:13px; font-weight:700; color:var(--blue-700); }
+  .btn-lock { width:100%; background:linear-gradient(135deg,#16a34a,#15803d); color:white; border:none; border-radius:13px; padding:13px; font-size:14.5px; font-weight:700; font-family:'Sarabun',sans-serif; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px; box-shadow:0 4px 14px rgba(22,163,74,.35); }
+  .btn-lock:disabled { background:#94a3b8; box-shadow:none; cursor:not-allowed; }
+  .review-overlay { position:absolute; inset:0; background:rgba(15,45,94,.55); display:flex; align-items:flex-end; z-index:100; backdrop-filter:blur(2px); }
+  .review-overlay.hidden { display:none; }
+  .review-sheet { width:100%; background:white; border-radius:28px 28px 0 0; padding:20px 18px 24px; max-height:82%; display:flex; flex-direction:column; }
+  .review-drag { width:40px; height:4px; background:var(--gray-200); border-radius:4px; margin:0 auto 14px; }
+  .review-title { font-size:17px; font-weight:700; color:var(--gray-800); margin-bottom:3px; }
+  .review-subtitle { font-size:12px; color:var(--gray-400); margin-bottom:12px; }
+  .review-body { flex:1; overflow-y:auto; scrollbar-width:none; margin-bottom:12px; }
+  .review-body::-webkit-scrollbar { display:none; }
+  .review-empty { text-align:center; color:var(--gray-400); font-size:13px; padding:30px 0; }
+  .suggest-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--gray-100); }
+  .suggest-check { width:20px; height:20px; flex-shrink:0; accent-color:var(--green-600); }
+  .suggest-info { flex:1; min-width:0; }
+  .suggest-name { font-size:13px; font-weight:600; color:var(--gray-800); }
+  .suggest-meta { font-size:10.5px; color:var(--gray-400); margin-top:1px; }
+  .suggest-qty { width:52px; height:32px; border:1.5px solid var(--gray-200); border-radius:9px; text-align:center; font-size:14px; font-weight:700; font-family:'Sarabun',sans-serif; }
+  .review-warning { font-size:11.5px; color:var(--amber-600); background:var(--amber-100); border-radius:10px; padding:8px 12px; margin-bottom:10px; }
+  .review-buttons { display:flex; gap:10px; }
+  .btn-cancel { flex:1; background:var(--gray-100); color:var(--gray-700); border:none; border-radius:13px; padding:12px; font-size:14px; font-weight:700; font-family:'Sarabun',sans-serif; cursor:pointer; }
+  .btn-confirm { flex:2; background:linear-gradient(135deg,#16a34a,#15803d); color:white; border:none; border-radius:13px; padding:12px; font-size:14px; font-weight:700; font-family:'Sarabun',sans-serif; cursor:pointer; }
+  .btn-confirm:disabled { background:#94a3b8; cursor:not-allowed; }
+  .loading-overlay { position:absolute; inset:0; background:rgba(15,45,94,.7); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:200; gap:14px; }
+  .loading-overlay.hidden { display:none; }
+  .spinner { width:44px; height:44px; border:4px solid rgba(255,255,255,.2); border-top-color:white; border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .loading-text { color:white; font-size:15px; font-weight:600; }
+  .done-screen { position:absolute; inset:0; background:var(--gray-50); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:30px; text-align:center; z-index:150; }
+  .done-screen.hidden { display:none; }
+  .done-icon { font-size:52px; }
+  .done-title { font-size:18px; font-weight:700; color:var(--gray-800); }
+  .done-detail { font-size:13px; color:var(--gray-600); line-height:1.6; }
+  .btn-again { background:var(--blue-700); color:white; border:none; border-radius:13px; padding:12px 24px; font-size:14px; font-weight:700; font-family:'Sarabun',sans-serif; cursor:pointer; margin-top:8px; }
+  .retry-order-btn { background:var(--amber-600); color:white; border:none; border-radius:11px; padding:10px 18px; font-size:13px; font-weight:700; font-family:'Sarabun',sans-serif; cursor:pointer; margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="phone-frame">
+
+  <div class="status-bar">
+    <span class="status-time" id="clock">9:41</span>
+    <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+  </div>
+
+  <div class="header">
+    <div class="header-title">🧮 นับสต็อกคงเหลือ</div>
+    <div class="header-date" id="hdate">สาขา หาดใหญ่</div>
+    <a href="index.html" style="color:rgba(255,255,255,.7);font-size:11px;text-decoration:none;">← กลับไปหน้าสั่งของ</a>
+  </div>
+
+  <div class="tab-bar" id="tab-bar"></div>
+
+  <div class="search-bar">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="search-input" type="text" placeholder="ค้นหาสินค้า..." oninput="filterItems(this.value)" autocomplete="off">
+      <button class="search-clear" id="search-clear" onclick="clearSearch()">✕</button>
+    </div>
+  </div>
+
+  <div class="summary-bar">
+    <span class="summary-text">กรอกเฉพาะรายการที่นับจริง ไม่บังคับครบ</span>
+    <span class="summary-count" id="tab-count">0 / 0</span>
+  </div>
+
+  <div class="content" id="content-area"></div>
+
+  <div class="bottom-bar">
+    <div class="bottom-row">
+      <span class="bottom-label">รายการที่นับแล้ว</span>
+      <span class="bottom-count" id="total-filled">0 รายการ</span>
+    </div>
+    <textarea class="note-field" id="note-field" placeholder="💬 หมายเหตุ?" rows="2"></textarea>
+    <button class="btn-lock" id="btn-review" onclick="openReview()">📝 ดูสรุปแนะนำสั่ง</button>
+  </div>
+
+  <!-- Review Sheet -->
+  <div class="review-overlay hidden" id="review-overlay">
+    <div class="review-sheet">
+      <div class="review-drag"></div>
+      <div class="review-title">📝 สรุปใบสั่งของแนะนำ</div>
+      <div class="review-subtitle" id="review-subtitle">สาขา หาดใหญ่</div>
+      <div class="review-body"><div id="review-body"></div></div>
+      <div class="review-warning">⚠️ ยืนยันแล้ว: บันทึกการนับสต็อก + ส่งใบสั่งของ (เฉพาะรายการที่ติ๊กไว้) เข้าระบบทันที</div>
+      <div class="review-buttons">
+        <button class="btn-cancel" onclick="closeReview()">← แก้ไข</button>
+        <button class="btn-confirm" id="btn-confirm" onclick="confirmAndSend()">✅ ยืนยัน & ส่ง</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading-overlay hidden" id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loading-text">กำลังส่งข้อมูล…</div>
+  </div>
+
+  <div class="done-screen hidden" id="done-screen">
+    <div class="done-icon">✅</div>
+    <div class="done-title">เสร็จแล้ว!</div>
+    <div class="done-detail" id="done-detail"></div>
+    <button class="btn-again" onclick="location.reload()">🔄 ทำรอบใหม่</button>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════
+const STOCK_COUNT_API_URL  = 'https://tpeipvacrtdligxhfomd.supabase.co/functions/v1/stock-count';
+const STOCK_SUBMIT_API_URL = 'https://tpeipvacrtdligxhfomd.supabase.co/functions/v1/submit-stock';
+const BRANCH = 'หาดใหญ่';
+
+// ══════════════════════════════════════════
+//  ITEM CATALOG — ต้องตรงกับ index.html เป๊ะ (ชื่อ/หน่วย/แท็บ)
+//  name = ชื่อจริงใน inventory_items (ใช้ยิง API), label = ชื่อย่อที่แสดง (ถ้าไม่ใส่ ใช้ name)
+// ══════════════════════════════════════════
+const CATALOG = [
+  { tab:'กงสิ', groups:[ { section:'วัตถุดิบกงสิ', items:[
+    { name:'ไข่มุกดำ', units:['ลัง','ถุง'] },
+    { name:'ใบชาแดง', unit:'ถุง' },
+    { name:'ใบชาเขียว', unit:'ถุง' },
+    { name:'ใบมะลิ', unit:'ถุง' },
+    { name:'ใบชาไทย', unit:'ถุง' },
+    { name:'ผงโอเลี้ยง', unit:'ถุง' },
+    { name:'ผงครีมชีส', unit:'ถุง' },
+    { name:'ซอสบราวน์ชูการ์', unit:'แกลลอน' },
+    { name:'ไซรัปแดงโบราณ', unit:'แกลลอน' },
+    { name:'ฝาซีลแก้ว', unit:'ม้วน' },
+    { name:'แก้ว', units:['ลัง','แถว'] },
+    { name:'หลอดเล็ก', unit:'แพ็ค' },
+    { name:'หลอดไข่มุก', unit:'แพ็ค' },
+    { name:'ไซรัปมะปี๊ด', unit:'ขวด' },
+  ]}]},
+  { tab:'ทั่วไป', groups:[
+    { section:'ไซรัปลองบีช', items:[
+      { name:'ไซรัปลองบีช กลิ่น คาราเมล', unit:'ขวด' },
+      { name:'ไซรัปลองบีช กลิ่น พีช', unit:'ขวด' },
+      { name:'ไซรัปลองบีช กลิ่น มิ้นท์', unit:'ขวด' },
+    ]},
+    { section:'ไซรัปติ่งฟง', items:[
+      { name:'ไซรัปติ่งฟง กลิ่น บลูฮาวาย', unit:'ขวด' },
+      { name:'ไซรัปติ่งฟง กลิ่น บลููเบอร์รี่', label:'ไซรัปติ่งฟง กลิ่น บลูเบอร์รี่', unit:'ขวด' },
+      { name:'ไซรัปติ่งฟง กลิ่น สตอเบอร์รี่', unit:'ขวด' },
+      { name:'ไซรัปติ่งฟง กลิ่น แอปเปิ้ล', unit:'ขวด' },
+      { name:'ไซรัปติ่งฟง กลิ่น ลิ้นจี่', unit:'ขวด' },
+      { name:'ไซรัปติ่งฟง กลิ่น เสาวรส', unit:'ขวด' },
+      { name:'ไซรัปติ่งฟง มะม่วง', unit:'ขวด' },
+      { name:'ไซรัปติ่งฟง สับปะรด', unit:'ขวด' },
+      { name:'ไซรัปติ่งฟง กลิ่นโยเกิร์ต', unit:'ขวด' },
+    ]},
+    { section:'น้ำผลไม้ & น้ำผึ้ง', items:[
+      { name:'น้ำผลไม้เข้มข้น ซันควิก รสผลไม้รวม', label:'ซันควิก รสผลไม้รวม', unit:'ขวด' },
+      { name:'น้ำผลไม้เข้มข้น ซันควิก รสส้มชนิดเข้มข้น', label:'ซันควิก รสส้มชนิดเข้มข้น', unit:'ขวด' },
+      { name:'เฮลส์บลูบอยแดง', unit:'ขวด' },
+      { name:'น้ำผึ้งแท้', unit:'ขวด' },
+      { name:'เจลลี่ฟรุตสลัด กลิ่น ผลไม้รวม', unit:'ถุง' },
+    ]},
+    { section:'ผง', items:[
+      { name:'ผงโกโก้ ทิวลิป สีเข้ม', unit:'ถุง' },
+      { name:'ผงไมโล', unit:'ถุง' },
+      { name:'ผงโอวัลติน สูตร 3', unit:'ถุง' },
+      { name:'ผงเนสกาแฟเรดคัพแบบถุง', unit:'ถุง' },
+    ]},
+    { section:'นม & ครีม', items:[
+      { name:'นมจืด เมจิ แกนลอน 2 ลิตร', label:'นมจืด เมจิ 2 ลิตร', unit:'แกลลอน' },
+      { name:'โซดาร็อคเมาเท้น(สั่งซัพ)', label:'โซดาร็อคเมาเท้น', unit:'ถาด' },
+      { name:'นมข้นจืด คาเนชั่น เอ็กส์ตร้า 385 กรัม', label:'นมข้นจืด คาเนชั่น 385 ก.', unit:'ถาด' },
+      { name:'นมข้นหวาน คาเนชั่น 388 กรัม', label:'นมข้นหวาน คาเนชั่น 388 ก.', units:['ถาด','กระป๋อง'] },
+      { name:'น้ำตาลมิตรผล กลิ่น คาราเมล', units:['แพ็ค','ถุง'] },
+      { name:'น้ำเชื่อมมิตรผล ถุงสีม่วง', unit:'ลัง' },
+      { name:'ผงครีมเทียม ดรีมมี่ ถุงสีฟ้า', units:['ลัง','ถุง'] },
+    ]},
+    { section:'เนื้อผลไม้แช่แข็ง', items:[
+      { name:'เนื้อมะม่วงหั่นเต๋าแช่แข็ง', unit:'ถุง' },
+      { name:'เนื้อส้มแช่แข็ง', unit:'ถุง' },
+      { name:'เนื้อพีช แช่แข็ง', unit:'ถุง' },
+      { name:'เนื้อมิกซ์เบอร์รี่ แช่แข็ง', unit:'ถุง' },
+    ]},
+    { section:'ผลไม้กระป๋อง & ท็อปปิ้ง', items:[
+      { name:'สับปะรดกระป๋อง McGarratt', unit:'แพ็ค' },
+      { name:'ลำไยกระป๋อง ตรา Savepak', unit:'แพ็ค' },
+      { name:'ปีโป้ เยลลี่รวมรสผลไม้ 587.5 กรัม', label:'ปีโป้ เยลลี่รวมรสผลไม้', unit:'แพ็ค' },
+      { name:'โอวัลติน เฟลค (ท๊อปปิ้ง)', label:'โอวัลติน เฟลค (ท็อปปิ้ง)', unit:'ถุง' },
+      { name:'เอโร่ถ้วยน้ำจิ้ม+ฝา 3 ออนซ์*50', label:'เอโร่ถ้วยน้ำจิ้ม+ฝา 3 ออนซ์', unit:'แพ็ค' },
+    ]},
+    { section:'บรรจุภัณฑ์', items:[
+      { name:'กระดาษปริ้นความร้อน ขนาด 80*80 มม.', label:'กระดาษปริ้นความร้อน 80×80', unit:'แพ็ค' },
+      { name:'กระดาษปริ้นความร้อน ขนาด 57*38 มม.', label:'กระดาษปริ้นความร้อน 57×38', unit:'ม้วน' },
+      { name:'ถุงใส่แก้วน้ำ 1 ช่อง', unit:'แพ็ค' },
+      { name:'ถุงหิ้วชนิด ใส เหนียวขนาด 6*14', label:'ถุงหิ้ว ใส เหนียว 6×14', unit:'แพ็ค' },
+      { name:'ถุงหิ้วชนิด ใส เหนียวขนาด 8*16', label:'ถุงหิ้ว ใส เหนียว 8×16', unit:'แพ็ค' },
+      { name:'ถุงหิ้วชนิด ใส เหนียวขนาด 9*18', label:'ถุงหิ้ว ใส เหนียว 9×18', unit:'แพ็ค' },
+      { name:'ถุงใส่ชาแบบขุ่น ขนาด 16*26', label:'ถุงใส่ชาแบบขุ่น 16×26', unit:'แพ็ค' },
+      { name:'ถ้วยใส่ท็อปปิ้ง ขนาด 2 ออนซ์', label:'ถ้วยใส่ท็อปปิ้ง 2 ออนซ์', unit:'แพ็ค' },
+      { name:'ถุงซิปล็อคขนาด 15*21', label:'ถุงซิปล็อค 15×21', unit:'แพ็ค' },
+      { name:'ยางวงเส้นใหญ่', unit:'แพ็ค' },
+      { name:'ถุงขยะแบบหนา ขนาด 30*40  Hero', label:'ถุงขยะแบบหนา 30×40 Hero', unit:'แพ็ค' },
+      { name:'กระดาษทิสชู่เอนกประสงค์ (6 ม้วน)', label:'กระดาษทิสชู่เอนกประสงค์ 6 ม้วน', units:['แพ็ค','ม้วน'] },
+    ]},
+    { section:'น้ำยาทำความสะอาด', items:[
+      { name:'น้ำยาล้างจาน', units:['ถุง','แพ็ค'] },
+      { name:'น้ำยาถูพื้น', unit:'ถุง' },
+      { name:'ฝาโดม ขนาดปาก 95 รูใหญ่', unit:'แถว' },
+      { name:'น้ำยาทำความสะอาดเคาน์เตอร์เอนกประสงค์', label:'น้ำยาทำความสะอาดเคาน์เตอร์', unit:'ขวด' },
+    ]},
+  ]},
+  { tab:'ออนไลน์', groups:[ { section:'ออนไลน์', items:[
+    { name:'ผงเผือก อี้เหวิน', unit:'ถุง' },
+    { name:'เนื้อมะปี๊ด', unit:'กิโลกรัม' },
+    { name:'บุกป๊อปรสลิ้นจี่ ยี่ห้อเทนจู', label:'บุกป๊อปรสลิ้นจี่ เทนจู', unit:'กระปุก' },
+    { name:'บุุกป๊อปรสสตอเบอรี่ ยี่ห้อเทนจู', label:'บุกป๊อปรสสตอเบอรี่ เทนจู', unit:'กระปุก' },
+    { name:'บุกป๊อปรสยูสุ ยี่ห้อเทนจู', label:'บุกป๊อปรสยูสุ เทนจู', unit:'กระปุก' },
+    { name:'วุ้นมะพร้าวเม็ดเล็ก ยี่ห้อ ทีอีเอ', label:'วุ้นมะพร้าวเม็ดเล็ก ทีอีเอ', unit:'ถุง' },
+    { name:'ผงพุดดิ้งไข่ ยี่ห้อ POSSMEI', label:'ผงพุดดิ้งไข่ POSSMEI', unit:'ถุง' },
+  ]}]},
+  { tab:'PK BKK', groups:[ { section:'PK พาณิชย์ BKK', items:[
+    { name:'บุกติ่งฟง รสน้ำตาล', units:['ลัง','ถุง'] },
+    { name:'บุกติ่งฟง รสน้ำผึ้ง', units:['ลัง','ถุง'] },
+    { name:'บุกติ่งฟง รสบราวน์ชูการ์', units:['ลัง','ถุง'] },
+  ]}]},
+  { tab:'พร้อมเพย์', groups:[ { section:'พร้อมเพย์', items:[
+    { name:'กระดาษครอบฝาแก้ว', unit:'แพ็ค' },
+    { name:'บ๊วยดอง กระปุกใหญ่', unit:'กระปุก' },
+    { name:'มะนาว', unit:'ลูก' },
+  ]}]},
+];
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let currentTab = 0;
+// suggestions: Map('name|unit' -> {last_remaining, last_counted_week, avg_weekly_use, suggested_qty})
+let suggestions = new Map();
+
+function thaiISO(d = new Date()) {
+  const thai = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+  return thai.toISOString().replace('Z', '+07:00');
+}
+function suggKey(name, unit) { return name + '|' + unit; }
+
+// ══════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════
+function renderTabs() {
+  const bar = document.getElementById('tab-bar');
+  bar.innerHTML = CATALOG.map((t, i) =>
+    `<button class="tab-btn${i===0?' active':''}" onclick="switchTab(${i},this)">${t.tab}</button>`
+  ).join('');
+}
+
+function renderContent() {
+  const area = document.getElementById('content-area');
+  area.innerHTML = CATALOG.map((t, ti) => {
+    const groupsHtml = t.groups.map(g => {
+      const itemsHtml = g.items.map(item => renderItemRow(item, t.tab)).join('');
+      return `<div class="section-label">${g.section}</div>${itemsHtml}`;
+    }).join('');
+    return `<div class="tab-panel${ti===0?' active':''}" id="tab-${ti}">${groupsHtml}</div>`;
+  }).join('');
+}
+
+function renderItemRow(item, tab) {
+  const label = item.label || item.name;
+  const units = item.units || [item.unit];
+  const inputsHtml = units.map(u => {
+    const key = suggKey(item.name, u);
+    return `<div class="unit-field">
+      <span class="unit-field-label">${u}</span>
+      <input class="qty-input" type="number" min="0" inputmode="decimal"
+        data-name="${escapeAttr(item.name)}" data-unit="${escapeAttr(u)}"
+        placeholder="—" oninput="onQtyInput(this)">
+    </div>`;
+  }).join('');
+  return `<div class="item-row" data-tab="${escapeAttr(tab)}" data-name="${escapeAttr(item.name)}">
+    <div class="item-top">
+      <div class="item-info">
+        <div class="item-name">${label}</div>
+        <div class="item-hint" id="hint-${hintId(item.name, units[0])}">กำลังโหลด…</div>
+      </div>
+      <div class="unit-inputs">${inputsHtml}</div>
+    </div>
+  </div>`;
+}
+
+function hintId(name, unit) {
+  return btoa(unencodeURIComponent_safe(name + '|' + unit)).replace(/[^a-zA-Z0-9]/g, '');
+}
+function unencodeURIComponent_safe(s) { return encodeURIComponent(s); }
+function escapeAttr(s) { return String(s).replace(/"/g, '&quot;'); }
+
+function hintTextFor(item) {
+  const units = item.units || [item.unit];
+  const parts = units.map(u => {
+    const s = suggestions.get(suggKey(item.name, u));
+    if (!s) return `${u}: ยังไม่เคยนับ`;
+    const last = (s.last_remaining ?? '—') + ' ' + u;
+    const sugg = s.suggested_qty === null || s.suggested_qty === undefined
+      ? 'ยังไม่มีข้อมูลพอ'
+      : `แนะนำสั่ง <b>${s.suggested_qty}</b> ${u}`;
+    return `ครั้งก่อนเหลือ ${last} · ${sugg}`;
+  });
+  return parts.join(' | ');
+}
+
+function refreshAllHints() {
+  CATALOG.forEach(t => t.groups.forEach(g => g.items.forEach(item => {
+    const units = item.units || [item.unit];
+    const el = document.getElementById('hint-' + hintId(item.name, units[0]));
+    if (el) el.innerHTML = hintTextFor(item);
+  })));
+}
+
+// ══════════════════════════════════════════
+//  LOAD SUGGESTIONS FROM API
+// ══════════════════════════════════════════
+async function loadSuggestions() {
+  try {
+    const resp = await fetch(STOCK_COUNT_API_URL + '?branch=' + encodeURIComponent(BRANCH));
+    const json = await resp.json();
+    if (resp.ok && json.suggestions) {
+      json.suggestions.forEach(s => {
+        suggestions.set(suggKey(s.item_name, s.unit), s);
+      });
+    }
+  } catch (e) {
+    console.error('โหลดตัวเลขแนะนำไม่สำเร็จ', e);
+  }
+  refreshAllHints();
+}
+
+// ══════════════════════════════════════════
+//  TAB / SEARCH
+// ══════════════════════════════════════════
+function switchTab(idx, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + idx).classList.add('active');
+  btn.classList.add('active');
+  currentTab = idx;
+  updateTabCount();
+  document.getElementById('content-area').scrollTo({ top: 0 });
+  const s = document.getElementById('search-input');
+  if (s) { s.value = ''; filterItems(''); }
+}
+
+function filterItems(query) {
+  const q = query.trim().toLowerCase();
+  document.getElementById('search-clear').style.display = q ? 'block' : 'none';
+  document.querySelectorAll('.item-row').forEach(row => {
+    const name = (row.dataset.name || '').toLowerCase();
+    row.style.display = (!q || name.includes(q)) ? '' : 'none';
+  });
+}
+function clearSearch() {
+  document.getElementById('search-input').value = '';
+  filterItems('');
+}
+
+// ══════════════════════════════════════════
+//  INPUT HANDLING
+// ══════════════════════════════════════════
+function onQtyInput(input) {
+  const row = input.closest('.item-row');
+  const anyFilled = [...row.querySelectorAll('.qty-input')].some(i => i.value !== '');
+  row.classList.toggle('has-value', anyFilled);
+  updateCounts();
+}
+
+function updateCounts() {
+  let total = 0;
+  document.querySelectorAll('.item-row').forEach(row => {
+    if ([...row.querySelectorAll('.qty-input')].some(i => i.value !== '')) total++;
+  });
+  document.getElementById('total-filled').textContent = total + ' รายการ';
+  updateTabCount();
+}
+function updateTabCount() {
+  const panel = document.getElementById('tab-' + currentTab);
+  const rows = panel.querySelectorAll('.item-row');
+  let filled = 0;
+  rows.forEach(row => {
+    if ([...row.querySelectorAll('.qty-input')].some(i => i.value !== '')) filled++;
+  });
+  document.getElementById('tab-count').textContent = filled + ' / ' + rows.length;
+}
+
+// ══════════════════════════════════════════
+//  EXTRACT: การนับ + คำนวณแนะนำสั่งสด
+// ══════════════════════════════════════════
+function extractCounts() {
+  const counts = [];
+  document.querySelectorAll('.qty-input').forEach(input => {
+    if (input.value === '') return;
+    const qty = parseFloat(input.value);
+    if (Number.isNaN(qty) || qty < 0) return;
+    counts.push({ name: input.dataset.name, unit: input.dataset.unit, qty_remaining: qty });
+  });
+  return counts;
+}
+
+function computeSuggestedOrders() {
+  // ใช้ค่า "เหลือ" ที่พึ่งพิมพ์ล่าสุด + avg_weekly_use จาก server มาคำนวณแนะนำสั่งสด
+  const counts = extractCounts();
+  const orders = [];
+  counts.forEach(c => {
+    const s = suggestions.get(suggKey(c.name, c.unit));
+    const avg = s && s.avg_weekly_use != null ? Number(s.avg_weekly_use) : null;
+    if (avg === null) return; // ยังไม่มีข้อมูลพอ ไม่แนะนำ
+    const qty = Math.max(0, Math.ceil(avg * 1.2 - c.qty_remaining));
+    if (qty > 0) {
+      // หา tab/category ของ item เพื่อใส่ tab_name ตอนส่ง submit-stock
+      const found = findCatalogItem(c.name);
+      orders.push({ name: c.name, unit: c.unit, tab: found ? found.tab : '', qty });
+    }
+  });
+  return orders;
+}
+
+function findCatalogItem(name) {
+  for (const t of CATALOG) {
+    for (const g of t.groups) {
+      for (const item of g.items) {
+        if (item.name === name) return { tab: t.tab, item };
+      }
+    }
+  }
+  return null;
+}
+
+// ══════════════════════════════════════════
+//  REVIEW SHEET
+// ══════════════════════════════════════════
+let reviewOrders = [];
+
+function openReview() {
+  const counts = extractCounts();
+  if (counts.length === 0) {
+    alert('ยังไม่ได้นับรายการใดเลย กรุณากรอกอย่างน้อย 1 รายการ');
+    return;
+  }
+  reviewOrders = computeSuggestedOrders();
+
+  const body = document.getElementById('review-body');
+  if (reviewOrders.length === 0) {
+    body.innerHTML = '<div class="review-empty">ยังไม่มีรายการที่แนะนำให้สั่งสัปดาห์นี้<br>(ของเหลือเพียงพอ หรือยังไม่มีข้อมูลค่าเฉลี่ยพอ)</div>';
+  } else {
+    body.innerHTML = reviewOrders.map((o, i) => `
+      <div class="suggest-row">
+        <input type="checkbox" class="suggest-check" id="chk-${i}" checked>
+        <div class="suggest-info">
+          <div class="suggest-name">${o.name}</div>
+          <div class="suggest-meta">${o.unit}</div>
+        </div>
+        <input type="number" class="suggest-qty" id="qty-${i}" value="${o.qty}" min="0">
+      </div>`).join('');
+  }
+
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const thY = now.getFullYear() - 2500 + 543;
+  document.getElementById('review-subtitle').textContent =
+    `นับ ${counts.length} รายการ · ${pad(now.getDate())}/${pad(now.getMonth()+1)}/${thY} · สาขา หาดใหญ่`;
+
+  document.getElementById('review-overlay').classList.remove('hidden');
+}
+
+function closeReview() {
+  document.getElementById('review-overlay').classList.add('hidden');
+}
+
+// ══════════════════════════════════════════
+//  CONFIRM & SEND (2 ขั้น: นับสต็อก → ใบสั่งของ)
+// ══════════════════════════════════════════
+async function confirmAndSend() {
+  const btnConfirm = document.getElementById('btn-confirm');
+  btnConfirm.disabled = true;
+
+  const finalOrders = reviewOrders
+    .map((o, i) => {
+      const chk = document.getElementById('chk-' + i);
+      const qtyEl = document.getElementById('qty-' + i);
+      if (!chk || !chk.checked) return null;
+      const qty = parseFloat(qtyEl.value);
+      if (Number.isNaN(qty) || qty <= 0) return null;
+      return { tab: o.tab, name: o.name, unit: o.unit, qty };
+    })
+    .filter(Boolean);
+
+  closeReview();
+  document.getElementById('loading-overlay').classList.remove('hidden');
+  document.getElementById('loading-text').textContent = 'กำลังบันทึกการนับสต็อก…';
+
+  const countPayload = {
+    branch: BRANCH,
+    counted_at: thaiISO(),
+    note: document.getElementById('note-field').value.trim(),
+    items: extractCounts(),
+  };
+
+  try {
+    const countResp = await fetch(STOCK_COUNT_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(countPayload),
+    });
+    const countJson = await countResp.json().catch(() => null);
+    if (!countResp.ok) {
+      throw new Error(countJson && countJson.message ? countJson.message : ('HTTP ' + countResp.status));
+    }
+  } catch (err) {
+    document.getElementById('loading-overlay').classList.add('hidden');
+    btnConfirm.disabled = false;
+    alert('❌ บันทึกการนับสต็อกไม่สำเร็จ\n\nกรุณาลองใหม่อีกครั้ง\n(' + err.message + ')');
+    return;
+  }
+
+  // นับสต็อกสำเร็จแล้ว — ถ้ามีของที่ต้องสั่ง ส่งใบสั่งของต่อ
+  if (finalOrders.length > 0) {
+    document.getElementById('loading-text').textContent = 'กำลังส่งใบสั่งของ…';
+    const orderPayload = {
+      branch: BRANCH,
+      submitted_at: thaiISO(),
+      note: 'สั่งจากระบบแนะนำ (นับสต็อก ' + new Date().toLocaleDateString('th-TH') + ')',
+      items: finalOrders,
+    };
+    try {
+      const orderResp = await fetch(STOCK_SUBMIT_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderPayload),
+      });
+      const orderJson = await orderResp.json().catch(() => null);
+      if (!orderResp.ok) {
+        throw new Error(orderJson && orderJson.message ? orderJson.message : ('HTTP ' + orderResp.status));
+      }
+    } catch (err) {
+      showDone(
+        `✅ บันทึกการนับสต็อกแล้ว<br>❌ แต่ใบสั่งของยังไม่สำเร็จ: ${err.message}`,
+        finalOrders
+      );
+      return;
+    }
+  }
+
+  showDone(
+    `นับสต็อก ${countPayload.items.length} รายการ` +
+    (finalOrders.length > 0 ? `<br>ส่งใบสั่งของ ${finalOrders.length} รายการ` : '<br>ไม่มีรายการที่ต้องสั่งสัปดาห์นี้'),
+    null
+  );
+}
+
+function showDone(detailHtml, retryOrders) {
+  document.getElementById('loading-overlay').classList.add('hidden');
+  document.getElementById('done-detail').innerHTML = detailHtml;
+  if (retryOrders) {
+    const btn = document.createElement('button');
+    btn.className = 'retry-order-btn';
+    btn.textContent = '🔁 ลองส่งใบสั่งของอีกครั้ง';
+    btn.onclick = () => retrySendOrder(retryOrders, btn);
+    document.getElementById('done-detail').after(btn);
+  }
+  document.getElementById('done-screen').classList.remove('hidden');
+}
+
+async function retrySendOrder(orders, btn) {
+  btn.disabled = true;
+  btn.textContent = 'กำลังส่ง…';
+  try {
+    const resp = await fetch(STOCK_SUBMIT_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        branch: BRANCH,
+        submitted_at: thaiISO(),
+        note: 'สั่งจากระบบแนะนำ (retry)',
+        items: orders,
+      }),
+    });
+    const json = await resp.json().catch(() => null);
+    if (!resp.ok) throw new Error(json && json.message ? json.message : ('HTTP ' + resp.status));
+    btn.textContent = '✅ ส่งสำเร็จแล้ว';
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = '🔁 ลองอีกครั้ง';
+    alert('ยังไม่สำเร็จ: ' + err.message);
+  }
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+(function init() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const thY = d.getFullYear() - 2500 + 543;
+  document.getElementById('hdate').textContent =
+    `สาขา หาดใหญ่ · ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${thY}`;
+  document.getElementById('clock').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
+
+  renderTabs();
+  renderContent();
+  updateTabCount();
+  loadSuggestions();
+})();
+</script>
+</body>
+</html>
