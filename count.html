@@ -103,6 +103,8 @@
 import { CATALOG, BRANCH } from './lib/catalog.js';
 const SUMMARY_URL = 'https://tpeipvacrtdligxhfomd.supabase.co/functions/v1/weekly-summary';
 const COUNT_URL   = 'https://tpeipvacrtdligxhfomd.supabase.co/functions/v1/submit-count';
+const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwZWlwdmFjcnRkbGlneGhmb21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0NTQ1MDksImV4cCI6MjA4OTAzMDUwOX0.sJdUEmPVppEB6PQaoINbxyc7-vnlMD1Rao4OqIAvMEM';
+const AUTH = { 'Authorization': 'Bearer ' + ANON, 'apikey': ANON };
 
 let currentTab = 0;
 let lastRemaining = new Map(); // 'name|unit' -> number
@@ -145,7 +147,7 @@ function refreshHints() {
 }
 async function loadHints() {
   try {
-    const r = await fetch(SUMMARY_URL+'?branch='+encodeURIComponent(BRANCH));
+    const r = await fetch(SUMMARY_URL+'?branch='+encodeURIComponent(BRANCH), { headers: AUTH });
     const j = await r.json();
     if (r.ok && j.items) j.items.forEach(s=>{ if (s.last_remaining!=null) lastRemaining.set(key(s.item_name,s.unit), s.last_remaining); });
   } catch(e){ console.error(e); }
@@ -203,7 +205,7 @@ window.send = async ()=>{
   document.getElementById('donet').textContent='กำลังส่ง…'; document.getElementById('doned').textContent='';
   const payload={ branch:BRANCH, counted_at:thaiISO(), note:'', items:extract() };
   try{
-    const r=await fetch(COUNT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const r=await fetch(COUNT_URL,{method:'POST',headers:{'Content-Type':'application/json',...AUTH},body:JSON.stringify(payload)});
     const j=await r.json().catch(()=>null);
     if(!r.ok) throw new Error(j?.message||('HTTP '+r.status));
     document.getElementById('doneic').textContent='✅';

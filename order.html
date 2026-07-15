@@ -58,6 +58,8 @@ import { CATALOG, BRANCH } from './lib/catalog.js';
 import { buildLineMessages } from './lib/line-message.js';
 const SUMMARY_URL = 'https://tpeipvacrtdligxhfomd.supabase.co/functions/v1/weekly-summary';
 const CONFIRM_URL = 'https://tpeipvacrtdligxhfomd.supabase.co/functions/v1/confirm-order';
+const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwZWlwdmFjcnRkbGlneGhmb21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0NTQ1MDksImV4cCI6MjA4OTAzMDUwOX0.sJdUEmPVppEB6PQaoINbxyc7-vnlMD1Rao4OqIAvMEM';
+const AUTH = { 'Authorization': 'Bearer ' + ANON, 'apikey': ANON };
 const KONGSI = 'กงสิ';
 const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 
@@ -67,7 +69,7 @@ const weekLabel = ymd => { const [y,m,d]=ymd.split('-').map(Number); return `${d
 
 async function load(){
   let j;
-  try { const r=await fetch(SUMMARY_URL+'?branch='+encodeURIComponent(BRANCH)); j=await r.json();
+  try { const r=await fetch(SUMMARY_URL+'?branch='+encodeURIComponent(BRANCH), { headers: AUTH }); j=await r.json();
     if(!r.ok) throw new Error(j.message||'โหลดไม่สำเร็จ'); }
   catch(e){ document.getElementById('table').innerHTML=`<div class="loading">❌ ${e.message}</div>`; return; }
   weekStart=j.week_start_date;
@@ -120,7 +122,7 @@ async function confirm(){
   if(!pin) return;
   const btn=document.getElementById('btnconfirm'); btn.disabled=true; btn.textContent='กำลังบันทึก…';
   try{
-    const r=await fetch(CONFIRM_URL,{method:'POST',headers:{'Content-Type':'application/json','x-order-pin':pin},
+    const r=await fetch(CONFIRM_URL,{method:'POST',headers:{'Content-Type':'application/json','x-order-pin':pin,...AUTH},
       body:JSON.stringify({branch:BRANCH,items:orders.map(({name,unit,qty})=>({name,unit,qty}))})});
     const j=await r.json().catch(()=>null);
     if(r.status===401){ localStorage.removeItem('ks_order_pin'); throw new Error('PIN ไม่ถูกต้อง'); }

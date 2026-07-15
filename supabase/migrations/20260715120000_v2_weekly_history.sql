@@ -66,6 +66,7 @@ latest as (
          branch_id, item_name, unit,
          remaining as last_remaining, week_start_date as last_week
   from public.weekly_history
+  where remaining is not null
   order by branch_id, item_name, unit, week_start_date desc
 )
 select l.branch_id, l.item_name, l.unit,
