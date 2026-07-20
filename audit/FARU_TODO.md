@@ -1,0 +1,61 @@
+# 📋 สถานะ KS Stock v2 (อัปเดต 2026-07-15)
+
+## ✅ เสร็จ + ทดสอบผ่านแล้ว
+- Supabase: ตาราง weekly_history + view v2_suggestions + import 744 แถว (FARU รัน SQL แล้ว)
+- สูตรหนักสุด 8 สัปดาห์ ตรวจกับ Excel แล้วถูกต้อง (แถมกันข้อมูลเพี้ยนช่วง gap ได้)
+- edge functions 3 ตัว deploy แล้ว · หน้าเว็บ count/order อ่านข้อมูลจริงได้
+- decision: 11 รายการเมนูขนมปัง = ไม่เอา (ไม่โผล่ในหน้าอยู่แล้ว ไม่ต้องทำอะไร)
+
+## เหลือ FARU กดเอง
+1. **merge PR** ให้เว็บขึ้นจริง → https://github.com/faruzr/KS/pull/new/v2 (Create → Merge)
+2. **ตั้ง PIN** (ไว้ตอนจะสั่งจริง): `! /opt/homebrew/bin/supabase secrets set ORDER_PIN=<เลข> --project-ref tpeipvacrtdligxhfomd`
+3. **ทดสอบจริง**: อาทิตย์แรกให้น้องกรอก count.html → FARU เปิด order.html เคาะสั่ง
+
+---
+## (ประวัติ) สิ่งที่ FARU ต้องกดเอง — ตอนเริ่ม
+
+## ① รัน SQL สร้างตาราง + เทประวัติ (5 นาที) — **ทำก่อนเป็นอันดับแรก**
+
+1. เปิด https://supabase.com/dashboard/project/tpeipvacrtdligxhfomd/sql/new
+2. เปิดไฟล์ `KS/scripts/out/RUN_THIS_IN_SUPABASE.sql` → ก๊อปทั้งหมด → วางในช่อง → กด **Run**
+3. ควรขึ้น success · เช็คว่าได้ข้อมูล: รันต่อในช่องเดิม
+   ```sql
+   select count(*) total, min(week_start_date) first_wk, max(week_start_date) last_wk
+   from weekly_history;
+   -- ควรได้ ~744 แถว, first 2025-12-28, last ~2026-02-22
+   select * from v2_suggestions where item_name='ใบชาแดง';
+   -- ควรเห็น max_used_8w กับ suggested_qty มีค่า
+   ```
+
+## ② ตั้ง PIN สำหรับหน้าเคาะสั่งของ (2 นาที)
+
+หน้า `order.html` (หน้าพี่เคาะสั่ง) ต้องใส่ PIN ก่อนยืนยันสั่ง — เลือกเลข 4-6 หลักที่จำง่าย
+พิมพ์ในช่องแชทนี้เลย (ผมจะรันให้ หรือพี่รันเองก็ได้):
+```
+! /opt/homebrew/bin/supabase secrets set ORDER_PIN=<เลขที่พี่เลือก> --project-ref tpeipvacrtdligxhfomd
+```
+
+## ③ ตัดสินใจ 11 รายการเมนูขนมปัง (1 นาที)
+
+ของพวกนี้อยู่ใน Excel แต่ไม่เคยอยู่ในระบบ (แฮม/ชีส/มายองเนส/สังขยา/ปูอัด/ไข่กุ้ง/เนยสด/ขนมปัง):
+> ขนมปังฟาร์มเฮ้าส์, ชีสแผ่นสไลด์, ปูอัดแบบแท่ง, มัสตาร์ท, มายองเนส คิวพี, มายองเนสซอสพริก คิวพี, สังขยาไข่, สังขยาไข่ใบเตย, เนยสด อลาวรี่, แฮมไก่, ไข่กุ้ง
+
+ประวัติเก็บไว้แล้ว (ไม่หาย) แต่**ยังไม่โผล่ในหน้ากรอก/สั่ง** — บอกผมว่า "เอาเข้า" (จะเพิ่มใน catalog + inventory) หรือ "ไม่เอา" (เมนูขนมปังเลิกแล้ว)
+
+## ④ ทดสอบจริง + ปล่อยใช้งาน
+
+หลังทำ ①②③ เสร็จ บอกผม ผมจะ:
+- ทดสอบ end-to-end ให้ (ยิงข้อมูลจริงเข้า/ออก เช็คสูตร)
+- เปิด PR + เอา Vercel preview URL ให้พี่ลองบนมือถือ
+- ร่างข้อความสอนน้อง + ลิงก์เข้ากลุ่ม LINE
+
+---
+
+### ✅ ที่ผมทำเสร็จแล้ว (ไม่ต้องทำอะไร)
+- ตรวจ + ฟื้นระบบเดิม (project แค่ pause ไม่ได้ถูกลบ)
+- ออกแบบตาราง `weekly_history` + view สูตร "หนักสุด 8 สัปดาห์" (ไฟล์ SQL พร้อม)
+- แปลงประวัติ Excel → SQL (744 แถว, จับคู่ชื่อ 82/93 รายการ)
+- เขียน + deploy edge functions 3 ตัว (submit-count, weekly-summary, confirm-order)
+- ทำหน้าเว็บ 2 หน้า (count.html หน้าน้อง, order.html หน้าพี่) + gen ข้อความ LINE
+- push branch `v2` ขึ้น GitHub (Vercel กำลังทำ preview)
+- ทดสอบ auth + validation ผ่านหมด (เหลือแค่ view ที่รอ SQL ①)

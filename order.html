@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เคาะสั่งของ — Kongsi หาดใหญ่</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --blue-900:#0f2d5e; --blue-700:#1a4a9c; --blue-100:#dbeafe; --blue-50:#eff6ff;
+    --green-600:#16a34a; --amber-600:#b45309; --amber-100:#fef9c3; --red-600:#dc2626;
+    --gray-50:#f8fafc; --gray-100:#f1f5f9; --gray-200:#e2e8f0; --gray-400:#94a3b8;
+    --gray-600:#475569; --gray-800:#1e293b; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Sarabun',sans-serif; background:var(--gray-50); max-width:680px; margin:0 auto; padding-bottom:110px; }
+  header { background:var(--blue-900); color:#fff; padding:16px; position:sticky; top:0; z-index:10; }
+  header h1 { font-size:18px; }
+  .status { font-size:12px; margin-top:4px; opacity:.9; }
+  .status.ok { color:#86efac; } .status.warn { color:#fde68a; }
+  .tab-head { background:#fff; padding:11px 14px 6px; font-size:15px; font-weight:700; color:var(--blue-700); border-top:6px solid var(--gray-100); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .badge { font-size:10.5px; background:var(--amber-100); color:var(--amber-600); padding:2px 8px; border-radius:10px; font-weight:600; }
+  table { width:100%; border-collapse:collapse; background:#fff; }
+  th { font-size:10.5px; color:var(--gray-400); text-align:right; padding:6px 8px; font-weight:600; }
+  th:first-child { text-align:left; padding-left:14px; }
+  td { padding:7px 8px; border-top:1px solid var(--gray-100); font-size:13px; text-align:right; color:var(--gray-600); }
+  td.name { text-align:left; padding-left:14px; color:var(--gray-800); font-weight:600; max-width:190px; }
+  td.name small { display:block; color:var(--gray-400); font-weight:400; font-size:10.5px; }
+  .nodata { color:var(--gray-400); font-size:11px; }
+  .qty { width:64px; height:36px; border:1.5px solid var(--gray-200); border-radius:8px; text-align:center; font-size:15px; font-weight:700; font-family:inherit; background:var(--gray-50); }
+  .qty.suggested { border-color:var(--blue-700); background:var(--blue-50); }
+  tr.zero td, tr.zero input { opacity:.5; }
+  .footer { position:fixed; bottom:0; left:0; right:0; max-width:680px; margin:0 auto; background:#fff; border-top:1px solid var(--gray-200); padding:12px 14px 20px; }
+  .f-row { display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px; color:var(--gray-600); }
+  .btn { width:100%; background:linear-gradient(135deg,#16a34a,#15803d); color:#fff; border:none; border-radius:12px; padding:14px; font-size:15px; font-weight:700; font-family:inherit; }
+  .btn:disabled { background:var(--gray-400); }
+  .msg-card { background:#fff; border:1.5px solid var(--gray-200); border-radius:14px; margin:12px 14px; padding:14px; }
+  .msg-card h3 { font-size:14px; color:var(--blue-700); margin-bottom:8px; }
+  .msg-card pre { white-space:pre-wrap; font-family:inherit; font-size:13px; background:var(--gray-50); border-radius:10px; padding:11px; color:var(--gray-800); }
+  .btn-copy { margin-top:8px; background:var(--blue-700); color:#fff; border:none; border-radius:9px; padding:9px 18px; font-size:13px; font-weight:700; font-family:inherit; }
+  .btn-copy.copied { background:var(--green-600); }
+  #done { display:none; }
+  .loading { text-align:center; padding:44px; color:var(--gray-400); }
+</style>
+</head>
+<body>
+<header>
+  <h1>🧾 เคาะสั่งของ — Kongsi หาดใหญ่</h1>
+  <div class="status" id="status">กำลังโหลด…</div>
+</header>
+<div id="table"><div class="loading">⏳ กำลังโหลดข้อมูล…</div></div>
+<div id="done"></div>
+<div class="footer" id="footer">
+  <div class="f-row"><span>รายการที่จะสั่ง</span><b id="ordercount">0 รายการ</b></div>
+  <button class="btn" id="btnconfirm">✅ ยืนยัน & สร้างข้อความ LINE</button>
+</div>
+
+<script type="module">
+import { CATALOG, BRANCH } from './lib/catalog.js';
+import { buildLineMessages } from './lib/line-message.js';
+const SUMMARY_URL = 'https://tpeipvacrtdligxhfomd.supabase.co/functions/v1/weekly-summary';
+const CONFIRM_URL = 'https://tpeipvacrtdligxhfomd.supabase.co/functions/v1/confirm-order';
+const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwZWlwdmFjcnRkbGlneGhmb21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0NTQ1MDksImV4cCI6MjA4OTAzMDUwOX0.sJdUEmPVppEB6PQaoINbxyc7-vnlMD1Rao4OqIAvMEM';
+const AUTH = { 'Authorization': 'Bearer ' + ANON, 'apikey': ANON };
+const KONGSI = 'กงสิ';
+const MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+let summary = new Map(); let weekStart = '';
+const key=(n,u)=>n+'|'+u;
+const weekLabel = ymd => { const [y,m,d]=ymd.split('-').map(Number); return `${d} ${MONTHS[m-1]} ${String(y+543).slice(-2)}`; };
+
+async function load(){
+  let j;
+  try { const r=await fetch(SUMMARY_URL+'?branch='+encodeURIComponent(BRANCH), { headers: AUTH }); j=await r.json();
+    if(!r.ok) throw new Error(j.message||'โหลดไม่สำเร็จ'); }
+  catch(e){ document.getElementById('table').innerHTML=`<div class="loading">❌ ${e.message}</div>`; return; }
+  weekStart=j.week_start_date;
+  j.items.forEach(s=>summary.set(key(s.item_name,s.unit),s));
+  const st=document.getElementById('status');
+  if(j.last_count_at){
+    const t=new Date(j.last_count_at).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    st.textContent=`✅ น้องส่งนับอาทิตย์นี้แล้ว (${t}) · อาทิตย์ ${weekLabel(weekStart)}`; st.className='status ok';
+  } else {
+    st.textContent=`⚠️ อาทิตย์นี้น้องยังไม่ส่งเลขนับ — ตัวเลข "เหลือ" ด้านล่างเป็นของครั้งก่อน`; st.className='status warn';
+  }
+  render();
+}
+function render(){
+  let html='';
+  for(const t of CATALOG){
+    const badge = t.tab===KONGSI ? '<span class="badge">⭐ ส่งจากกรุงเทพ — พลาดแล้วแพง</span>' : '';
+    html+=`<div class="tab-head">${t.tab} ${badge}</div><table><tr><th>รายการ</th><th>เหลือ</th><th>หนักสุด/8สัปดาห์</th><th>สั่ง</th></tr>`;
+    for(const g of t.groups) for(const it of g.items){
+      const units=it.units||[it.unit];
+      for(const u of units){
+        const s=summary.get(key(it.name,u))||{};
+        const sugg=s.suggested_qty;
+        const stale=s.last_week && s.last_week!==weekStart;
+        html+=`<tr class="${!sugg?'zero':''}">
+          <td class="name">${it.label||it.name}<small>${u}</small></td>
+          <td>${s.last_remaining??'—'}${stale?' <small style="color:var(--red-600)">(เก่า)</small>':''}</td>
+          <td>${s.max_used_8w??'<span class="nodata">—</span>'}</td>
+          <td><input class="qty ${sugg?'suggested':''}" type="number" min="0" inputmode="decimal"
+            data-tab="${t.tab}" data-name="${it.name.replace(/"/g,'&quot;')}" data-unit="${u}"
+            value="${sugg??''}" placeholder="0"></td></tr>`;
+      }
+    }
+    html+='</table>';
+  }
+  const el=document.getElementById('table'); el.innerHTML=html;
+  el.addEventListener('input',updateCount); updateCount();
+}
+function collect(){
+  return [...document.querySelectorAll('.qty')]
+    .map(i=>({tab:i.dataset.tab,name:i.dataset.name,unit:i.dataset.unit,qty:parseFloat(i.value)}))
+    .filter(o=>o.qty>0);
+}
+function updateCount(){ document.getElementById('ordercount').textContent=collect().length+' รายการ'; }
+
+async function confirm(){
+  const orders=collect();
+  if(orders.length===0){ alert('ยังไม่มีรายการที่จะสั่ง'); return; }
+  let pin=localStorage.getItem('ks_order_pin')||prompt('ใส่ PIN ยืนยันการสั่ง:');
+  if(!pin) return;
+  const btn=document.getElementById('btnconfirm'); btn.disabled=true; btn.textContent='กำลังบันทึก…';
+  try{
+    const r=await fetch(CONFIRM_URL,{method:'POST',headers:{'Content-Type':'application/json','x-order-pin':pin,...AUTH},
+      body:JSON.stringify({branch:BRANCH,items:orders.map(({name,unit,qty})=>({name,unit,qty}))})});
+    const j=await r.json().catch(()=>null);
+    if(r.status===401){ localStorage.removeItem('ks_order_pin'); throw new Error('PIN ไม่ถูกต้อง'); }
+    if(!r.ok) throw new Error(j?.message||('HTTP '+r.status));
+    localStorage.setItem('ks_order_pin',pin);
+    showMessages(orders);
+  }catch(e){ alert('❌ '+e.message); btn.disabled=false; btn.textContent='✅ ยืนยัน & สร้างข้อความ LINE'; }
+}
+function showMessages(orders){
+  const msgs=buildLineMessages(orders,weekLabel(weekStart));
+  const done=document.getElementById('done');
+  done.innerHTML='<div class="tab-head">📨 ก๊อปข้อความไปวางใน LINE</div>'+msgs.map((m,i)=>
+    `<div class="msg-card"><h3>${m.tab} (${m.count} รายการ)</h3><pre id="msg-${i}">${m.text}</pre>
+     <button class="btn-copy" data-i="${i}">📋 คัดลอก</button></div>`).join('');
+  done.style.display='block';
+  document.getElementById('table').style.display='none';
+  document.getElementById('footer').style.display='none';
+  window.scrollTo(0,0);
+  done.querySelectorAll('.btn-copy').forEach(b=>b.addEventListener('click',async()=>{
+    await navigator.clipboard.writeText(document.getElementById('msg-'+b.dataset.i).textContent);
+    b.textContent='✅ คัดลอกแล้ว'; b.classList.add('copied');
+  }));
+}
+document.getElementById('btnconfirm').addEventListener('click',confirm);
+load();
+</script>
+</body>
+</html>

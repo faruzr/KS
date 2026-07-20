@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>นับของประจำอาทิตย์ — Kongsi หาดใหญ่</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue-900:#0f2d5e; --blue-700:#1a4a9c; --blue-400:#3b82f6; --blue-100:#dbeafe; --blue-50:#eff6ff;
+    --green-600:#16a34a; --amber-600:#b45309; --amber-100:#fef9c3;
+    --gray-50:#f8fafc; --gray-100:#f1f5f9; --gray-200:#e2e8f0; --gray-400:#94a3b8;
+    --gray-600:#475569; --gray-800:#1e293b; --white:#fff;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { font-family:'Sarabun',sans-serif; background:var(--gray-50); }
+  .app { max-width:480px; margin:0 auto; min-height:100dvh; display:flex; flex-direction:column; background:var(--gray-50); }
+  header { background:var(--blue-900); padding:14px 18px; position:sticky; top:0; z-index:20; }
+  .h-title { color:#fff; font-size:18px; font-weight:700; }
+  .h-date { color:var(--blue-100); font-size:12px; opacity:.85; margin-top:2px; }
+  .tab-bar { background:var(--blue-900); padding:6px 10px; display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; position:sticky; top:56px; z-index:19; }
+  .tab-bar::-webkit-scrollbar { display:none; }
+  .tab-btn { white-space:nowrap; padding:6px 14px; font-size:13px; font-family:inherit; font-weight:500; color:rgba(255,255,255,.6); background:none; border:none; border-radius:20px; flex-shrink:0; }
+  .tab-btn.active { color:var(--blue-900); background:#fff; font-weight:700; }
+  .summary { background:var(--blue-50); padding:8px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--gray-200); position:sticky; top:96px; z-index:18; }
+  .summary-text { font-size:12px; color:var(--gray-600); }
+  .summary-count { font-size:12px; font-weight:700; color:var(--blue-700); background:var(--blue-100); padding:2px 9px; border-radius:10px; }
+  .content { flex:1; padding:8px 12px 100px; }
+  .section-label { font-size:11px; font-weight:700; color:var(--gray-400); letter-spacing:.6px; padding:10px 4px 5px; }
+  .panel { display:none; } .panel.active { display:block; }
+  .row { background:#fff; border-radius:11px; padding:10px 12px; margin-bottom:6px; border:1.5px solid var(--gray-100); display:flex; align-items:center; gap:10px; }
+  .row.filled { border-color:var(--blue-400); background:var(--blue-50); }
+  .row-info { flex:1; min-width:0; }
+  .row-name { font-size:13.5px; font-weight:600; color:var(--gray-800); line-height:1.3; }
+  .row-hint { font-size:11px; color:var(--gray-400); margin-top:2px; }
+  .row-hint b { color:var(--blue-700); }
+  .units { display:flex; gap:6px; flex-shrink:0; }
+  .unit-f { display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .unit-l { font-size:10px; color:var(--gray-600); font-weight:600; }
+  .qty { width:58px; height:38px; border:1.5px solid var(--gray-200); border-radius:9px; text-align:center; font-size:16px; font-weight:700; color:var(--gray-800); font-family:inherit; outline:none; background:var(--gray-50); }
+  .qty:focus { border-color:var(--blue-400); background:#fff; }
+  .footer { position:fixed; bottom:0; left:0; right:0; max-width:480px; margin:0 auto; background:#fff; border-top:1px solid var(--gray-200); padding:10px 14px 20px; }
+  .f-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:13px; color:var(--gray-600); }
+  .f-row b { color:var(--blue-700); }
+  .btn { width:100%; background:linear-gradient(135deg,#16a34a,#15803d); color:#fff; border:none; border-radius:12px; padding:14px; font-size:15px; font-weight:700; font-family:inherit; }
+  .btn:disabled { background:var(--gray-400); }
+  .overlay { position:fixed; inset:0; background:rgba(15,45,94,.55); display:flex; align-items:flex-end; z-index:100; }
+  .overlay.hidden { display:none; }
+  .sheet { width:100%; max-width:480px; margin:0 auto; background:#fff; border-radius:24px 24px 0 0; padding:20px 18px 24px; max-height:80%; display:flex; flex-direction:column; }
+  .sheet-title { font-size:17px; font-weight:700; color:var(--gray-800); margin-bottom:4px; }
+  .sheet-sub { font-size:12px; color:var(--gray-400); margin-bottom:10px; }
+  .sheet-body { flex:1; overflow-y:auto; margin-bottom:12px; }
+  .warn { font-size:12px; color:var(--amber-600); background:var(--amber-100); border-radius:10px; padding:9px 12px; margin-bottom:10px; }
+  .miss { font-size:13px; color:var(--gray-800); padding:6px 4px; border-bottom:1px solid var(--gray-100); }
+  .sheet-btns { display:flex; gap:10px; }
+  .btn-2 { flex:1; background:var(--gray-100); color:var(--gray-600); border:none; border-radius:12px; padding:13px; font-size:14px; font-weight:700; font-family:inherit; }
+  .btn-3 { flex:2; background:linear-gradient(135deg,#16a34a,#15803d); color:#fff; border:none; border-radius:12px; padding:13px; font-size:14px; font-weight:700; font-family:inherit; }
+  .done { position:fixed; inset:0; background:var(--gray-50); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:30px; text-align:center; z-index:150; }
+  .done.hidden { display:none; }
+  .done-ic { font-size:52px; } .done-t { font-size:19px; font-weight:700; color:var(--gray-800); } .done-d { font-size:14px; color:var(--gray-600); line-height:1.6; }
+  .spin { width:44px; height:44px; border:4px solid rgba(255,255,255,.25); border-top-color:#fff; border-radius:50%; animation:s .8s linear infinite; }
+  @keyframes s { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="h-title">📋 นับของประจำอาทิตย์</div>
+    <div class="h-date" id="hdate">สาขา หาดใหญ่</div>
+  </header>
+  <div class="tab-bar" id="tabbar"></div>
+  <div class="summary">
+    <span class="summary-text">นับให้ครบทุกช่อง · ของหมดใส่ 0</span>
+    <span class="summary-count" id="tabcount">0 / 0</span>
+  </div>
+  <div class="content" id="content"></div>
+  <div class="footer">
+    <div class="f-row"><span>กรอกแล้ว</span><b id="totalfilled">0 ช่อง</b></div>
+    <button class="btn" id="btnsend" onclick="openReview()">✅ ส่งการนับ</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="overlay">
+  <div class="sheet">
+    <div class="sheet-title" id="sheettitle">📋 เช็คก่อนส่ง</div>
+    <div class="sheet-sub" id="sheetsub"></div>
+    <div class="sheet-body" id="sheetbody"></div>
+    <div class="sheet-btns">
+      <button class="btn-2" onclick="closeReview()">← กลับไปแก้</button>
+      <button class="btn-3" id="btnconfirm" onclick="send()">ยืนยันส่ง</button>
+    </div>
+  </div>
+</div>
+
+<div class="done hidden" id="done">
+  <div class="done-ic" id="doneic">✅</div>
+  <div class="done-t" id="donet">เสร็จแล้ว!</div>
+  <div class="done-d" id="doned"></div>
+  <button class="btn-3" style="max-width:200px" onclick="location.reload()">🔄 ทำรอบใหม่</button>
+</div>
+
+<script type="module">
+import { CATALOG, BRANCH } from './lib/catalog.js';
+const SUMMARY_URL = 'https://tpeipvacrtdligxhfomd.supabase.co/functions/v1/weekly-summary';
+const COUNT_URL   = 'https://tpeipvacrtdligxhfomd.supabase.co/functions/v1/submit-count';
+const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwZWlwdmFjcnRkbGlneGhmb21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0NTQ1MDksImV4cCI6MjA4OTAzMDUwOX0.sJdUEmPVppEB6PQaoINbxyc7-vnlMD1Rao4OqIAvMEM';
+const AUTH = { 'Authorization': 'Bearer ' + ANON, 'apikey': ANON };
+
+let currentTab = 0;
+let lastRemaining = new Map(); // 'name|unit' -> number
+
+const key = (n,u) => n+'|'+u;
+const thaiISO = () => new Date(Date.now()+7*3600e3).toISOString().replace('Z','+07:00');
+const esc = s => String(s).replace(/"/g,'&quot;');
+
+function renderTabs() {
+  document.getElementById('tabbar').innerHTML = CATALOG.map((t,i)=>
+    `<button class="tab-btn${i===0?' active':''}" onclick="switchTab(${i},this)">${t.tab}</button>`).join('');
+}
+function renderContent() {
+  document.getElementById('content').innerHTML = CATALOG.map((t,ti)=>{
+    const g = t.groups.map(gr=>{
+      const rows = gr.items.map(it=>{
+        const units = it.units || [it.unit];
+        const inputs = units.map(u=>`<div class="unit-f"><span class="unit-l">${u}</span>
+          <input class="qty" type="number" min="0" inputmode="decimal" data-name="${esc(it.name)}" data-unit="${esc(u)}" placeholder="—" oninput="onInput(this)"></div>`).join('');
+        return `<div class="row" data-name="${esc(it.name)}"><div class="row-info">
+          <div class="row-name">${it.label||it.name}</div>
+          <div class="row-hint" id="hint-${btoa(encodeURIComponent(it.name)).replace(/[^a-zA-Z0-9]/g,'')}">—</div>
+          </div><div class="units">${inputs}</div></div>`;
+      }).join('');
+      return `<div class="section-label">${gr.section}</div>${rows}`;
+    }).join('');
+    return `<div class="panel${ti===0?' active':''}" id="panel-${ti}">${g}</div>`;
+  }).join('');
+}
+function refreshHints() {
+  CATALOG.forEach(t=>t.groups.forEach(g=>g.items.forEach(it=>{
+    const el = document.getElementById('hint-'+btoa(encodeURIComponent(it.name)).replace(/[^a-zA-Z0-9]/g,''));
+    if (!el) return;
+    const units = it.units || [it.unit];
+    el.innerHTML = units.map(u=>{
+      const r = lastRemaining.get(key(it.name,u));
+      return r==null ? `${u}: ยังไม่เคยนับ` : `ครั้งก่อนเหลือ <b>${r}</b> ${u}`;
+    }).join(' | ');
+  })));
+}
+async function loadHints() {
+  try {
+    const r = await fetch(SUMMARY_URL+'?branch='+encodeURIComponent(BRANCH), { headers: AUTH });
+    const j = await r.json();
+    if (r.ok && j.items) j.items.forEach(s=>{ if (s.last_remaining!=null) lastRemaining.set(key(s.item_name,s.unit), s.last_remaining); });
+  } catch(e){ console.error(e); }
+  refreshHints();
+}
+window.switchTab = (i,btn)=>{
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+i).classList.add('active'); btn.classList.add('active');
+  currentTab=i; updateTabCount(); window.scrollTo(0,0);
+};
+window.onInput = (input)=>{
+  const row=input.closest('.row');
+  row.classList.toggle('filled', [...row.querySelectorAll('.qty')].some(i=>i.value!==''));
+  updateCounts();
+};
+function updateCounts(){
+  let t=0; document.querySelectorAll('.qty').forEach(i=>{ if(i.value!=='')t++; });
+  document.getElementById('totalfilled').textContent = t+' ช่อง'; updateTabCount();
+}
+function updateTabCount(){
+  const p=document.getElementById('panel-'+currentTab); const inputs=p.querySelectorAll('.qty');
+  let f=0; inputs.forEach(i=>{ if(i.value!=='')f++; });
+  document.getElementById('tabcount').textContent = f+' / '+inputs.length;
+}
+function extract(){
+  const out=[];
+  document.querySelectorAll('.qty').forEach(i=>{
+    if(i.value==='')return; const q=parseFloat(i.value);
+    if(!Number.isFinite(q)||q<0)return;
+    out.push({name:i.dataset.name, unit:i.dataset.unit, qty_remaining:q});
+  });
+  return out;
+}
+window.openReview = ()=>{
+  const counts=extract();
+  if(counts.length===0){ alert('ยังไม่ได้กรอกเลยสักช่อง'); return; }
+  const missing=[];
+  document.querySelectorAll('.row').forEach(r=>{
+    if(![...r.querySelectorAll('.qty')].some(i=>i.value!=='')) missing.push(r.querySelector('.row-name').textContent);
+  });
+  document.getElementById('sheetsub').textContent = `กรอกแล้ว ${counts.length} ช่อง · สาขา ${BRANCH}`;
+  document.getElementById('sheetbody').innerHTML = missing.length===0
+    ? '<div class="warn" style="background:#dcfce7;color:#16a34a">ครบทุกรายการแล้ว 🎉 กดยืนยันได้เลย</div>'
+    : `<div class="warn">⚠️ ยังไม่ได้กรอก ${missing.length} รายการ — ถ้าของ "หมด" ให้กลับไปใส่ 0 (ไม่ใช่เว้นว่าง)</div>`
+      + missing.map(n=>`<div class="miss">${n}</div>`).join('');
+  document.getElementById('overlay').classList.remove('hidden');
+};
+window.closeReview = ()=> document.getElementById('overlay').classList.add('hidden');
+window.send = async ()=>{
+  const btn=document.getElementById('btnconfirm'); btn.disabled=true;
+  closeReview();
+  document.getElementById('done').classList.remove('hidden');
+  document.getElementById('doneic').innerHTML='<div class="spin"></div>';
+  document.getElementById('donet').textContent='กำลังส่ง…'; document.getElementById('doned').textContent='';
+  const payload={ branch:BRANCH, counted_at:thaiISO(), note:'', items:extract() };
+  try{
+    const r=await fetch(COUNT_URL,{method:'POST',headers:{'Content-Type':'application/json',...AUTH},body:JSON.stringify(payload)});
+    const j=await r.json().catch(()=>null);
+    if(!r.ok) throw new Error(j?.message||('HTTP '+r.status));
+    document.getElementById('doneic').textContent='✅';
+    document.getElementById('donet').textContent='ส่งเรียบร้อย!';
+    document.getElementById('doned').innerHTML=`บันทึกการนับ ${payload.items.length} ช่องแล้ว 🙏`;
+  }catch(err){
+    document.getElementById('doneic').textContent='❌';
+    document.getElementById('donet').textContent='ส่งไม่สำเร็จ';
+    document.getElementById('doned').innerHTML=`ลองใหม่อีกครั้งนะครับ<br><small>${err.message}</small>`;
+    btn.disabled=false;
+  }
+};
+(function init(){
+  const d=new Date(); const pad=n=>String(n).padStart(2,'0'); const thY=d.getFullYear()+543;
+  document.getElementById('hdate').textContent=`สาขา หาดใหญ่ · ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(thY).slice(-2)}`;
+  renderTabs(); renderContent(); updateTabCount(); loadHints();
+})();
+</script>
+</body>
+</html>
