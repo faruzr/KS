@@ -114,10 +114,24 @@ const LADPRAO_SHEETS = [
   ],
 ];
 
+// ของเสียง่าย: ถ้ายังมีของเหลือ (> 0) ต้องกรอก EXP (วันหมดอายุที่ใกล้สุด) · รายการอื่นกรอก EXP ได้แต่ไม่บังคับ
+// ร่างโดย Claude 10 ต.ค. 2026 จากชื่อสินค้า — รอ FARU/หน้าร้านยืนยัน
+const EXP_REQUIRED = new Set([
+  'นมจืด เมจิ แกนลอน 2 ลิตร',
+  'เนื้อมะม่วงหั่นเต๋าแช่แข็ง', 'เนื้อส้มแช่แข็ง', 'เนื้อพีช แช่แข็ง', 'เนื้อมิกซ์เบอร์รี่ แช่แข็ง',
+  'มะนาวแบบน้ำ 1 กก.',
+  'ขนมปังฟาร์มเฮ้าส์ 1 ปอนด์', 'เนยสดชนิดเค็ม อลาวรี่ 227 กรัม', 'ปูอัดแบบแท่ง', 'ไข่กุ้ง',
+  'มายองเนส คิวพี', 'มายองเนสซอสพริก คิวพี', 'แฮมไก่', 'ชีสแผ่นสไลด์ ขนาด 84แผ่น',
+  'สังขยาไข่', 'สังขยาไข่ใบเตย',
+]);
+
+// ใกล้หมดอายุ = EXP ภายในกี่วันนับจากวันส่งรายงาน (นับสต็อกสัปดาห์ละครั้ง → 7 วัน, FARU เลือก 10 ต.ค. 2026)
+const EXP_WARN_DAYS = 7;
+
 
 const REPORT_BRANCH = 'ลาดพร้าว 122';
 const REPORT_SLOTS = LADPRAO_SHEETS.flatMap((sheet, sheetIndex) => sheet.flatMap(group =>
-  group.items.map(([name, unit]) => ({ name, label: name, unit, category: group.section, sheet: sheetIndex }))));
+  group.items.map(([name, unit]) => ({ name, label: name, unit, category: group.section, sheet: sheetIndex, expRequired: EXP_REQUIRED.has(name) }))));
 
 function validateReport(input) {
   if (!input || input.branch !== REPORT_BRANCH) throw new Error('สาขาไม่ถูกต้อง');
@@ -132,15 +146,24 @@ function validateReport(input) {
     if (mapped.has(key)) throw new Error('รายการซ้ำ');
     if (typeof item.qty_remaining !== 'number' || !Number.isFinite(item.qty_remaining) || item.qty_remaining < 0) throw new Error('จำนวนต้องเป็นตัวเลขตั้งแต่ 0 ขึ้นไป');
     if (item.note !== undefined && (typeof item.note !== 'string' || item.note.length > 50)) throw new Error('หมายเหตุต่อรายการต้องไม่เกิน 50 ตัวอักษร');
-    mapped.set(key, { qty: item.qty_remaining, note: (item.note ?? '').trim() });
+    if (item.exp !== undefined && item.exp !== '' && !isIsoDate(item.exp)) throw new Error('วันหมดอายุ (EXP) ไม่ถูกต้อง');
+    mapped.set(key, { qty: item.qty_remaining, note: (item.note ?? '').trim(), exp: item.exp || '' });
   }
   const items = REPORT_SLOTS.map(slot => {
     const key = JSON.stringify([slot.name, slot.unit]);
     if (!mapped.has(key)) throw new Error('รายการสินค้าไม่ตรงกับแบบฟอร์ม');
-    const { qty, note } = mapped.get(key);
-    return { name: slot.name, unit: slot.unit, qty_remaining: qty, note };
+    const { qty, note, exp } = mapped.get(key);
+    if (slot.expRequired && qty > 0 && !exp) throw new Error(`กรุณาใส่วันหมดอายุ (EXP) ของ ${slot.name}`);
+    return { name: slot.name, unit: slot.unit, qty_remaining: qty, note, exp };
   });
   return { requestId: input.requestId, branch: REPORT_BRANCH, submittedBy: input.submittedBy.trim(), note: input.note.trim(), items };
+}
+
+// YYYY-MM-DD ที่เป็นวันจริง (กัน 2026-02-30) ปี 2020–2099 กันพิมพ์ปี พ.ศ.
+function isIsoDate(value) {
+  if (typeof value !== 'string' || !/^20[2-9]\d-\d{2}-\d{2}$/.test(value)) return false;
+  const d = new Date(value + 'T00:00:00Z');
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
 }
 
 function reportReceipt(body, requestId) {
@@ -258,6 +281,18 @@ function buildStockFlexMessage({
 
 const esc = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
+// EXP แบบที่หน้าร้านใช้: 14/10/69 (วัน/เดือน/ปี พ.ศ. 2 หลัก)
+function formatExp(iso) {
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${String(Number(y) + 543).slice(-2)}`;
+}
+
+// จำนวนวันจากวันส่งรายงาน (เวลาไทย) ถึง EXP · ติดลบ = หมดอายุแล้ว
+function daysToExp(iso, submittedAt) {
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date(submittedAt));
+  return Math.round((Date.parse(iso + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / 86400000);
+}
+
 // Stock sheets laid out like the paper "ตารางเช็คสต็อครายการวัตถุดิบ สาขา ลาดพร้าว" (one HTML per sheet in
 // LADPRAO_SHEETS). Gotenberg screenshots each one to a 1080px-wide PNG that is sent to LINE as an image.
 // Input is the output of validateReport() plus submittedAt.
@@ -271,10 +306,12 @@ function buildStockSheetsHtml(report, submittedAt) {
       if (slot.sheet !== sheet) return;
       if (slot.category !== section) {
         section = slot.category;
-        rows += `<tr class="head"><th>${esc(section)}</th><th>หน่วย</th><th>คงเหลือ</th><th>หมายเหตุ</th></tr>`;
+        rows += `<tr class="head"><th>${esc(section)}</th><th>หน่วย</th><th>คงเหลือ</th><th>EXP</th><th>หมายเหตุ</th></tr>`;
       }
       const out = item.qty_remaining === 0;
-      rows += `<tr${out ? ' class="out"' : ''}><td>${esc(slot.label)}</td><td class="c">${esc(item.unit)}</td><td class="c qty">${item.qty_remaining}${out ? ' <span class="tag">หมด</span>' : ''}</td><td class="note">${esc(item.note || '')}</td></tr>`;
+      const days = item.exp ? daysToExp(item.exp, submittedAt) : null;
+      const exp = item.exp ? `<td class="c exp${days <= EXP_WARN_DAYS ? ' soon' : ''}">${formatExp(item.exp)}${days < 0 ? ' <span class="tag">เลยวัน</span>' : ''}</td>` : '<td class="c exp"></td>';
+      rows += `<tr${out ? ' class="out"' : ''}><td>${esc(slot.label)}</td><td class="c">${esc(item.unit)}</td><td class="c qty">${item.qty_remaining}${out ? ' <span class="tag">หมด</span>' : ''}</td>${exp}<td class="note">${esc(item.note || '')}</td></tr>`;
     });
     return `<!doctype html><html lang="th"><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=block" rel="stylesheet">
@@ -289,17 +326,20 @@ th{font-weight:700;text-align:center}
 .round td{font-weight:700}
 .round span{float:right;font-weight:400}
 tr.head th{background:#f3f4f6}
-th:nth-child(2),td:nth-child(2){width:120px}
-th:nth-child(3),td:nth-child(3){width:150px}
-th:nth-child(4),td:nth-child(4){width:230px}
+th:nth-child(2),td:nth-child(2){width:110px}
+th:nth-child(3),td:nth-child(3){width:140px}
+th:nth-child(4),td:nth-child(4){width:150px}
+th:nth-child(5),td:nth-child(5){width:200px}
+.exp{font-size:23px}
+td.soon{color:#DC2626;background:#FEF2F2;font-weight:700}
 .note{font-size:22px}
 .c{text-align:center}
 .qty{font-weight:700}
 tr.out td{color:#DC2626;background:#FEF2F2}
 .tag{font-size:19px;border:1.5px solid #DC2626;border-radius:5px;padding:0 5px;vertical-align:middle}
 </style></head><body><table>
-<tr class="title"><td colspan="4">ตารางเช็คสต็อครายการวัตถุดิบ สาขา ลาดพร้าว</td></tr>
-<tr class="round"><td colspan="4">รอบวันที่ ${date} · ผู้ตรวจ ${esc(report.submittedBy)}<span>แผ่น ${sheet + 1}/${sheetCount}</span></td></tr>
+<tr class="title"><td colspan="5">ตารางเช็คสต็อครายการวัตถุดิบ สาขา ลาดพร้าว</td></tr>
+<tr class="round"><td colspan="5">รอบวันที่ ${date} · ผู้ตรวจ ${esc(report.submittedBy)}<span>แผ่น ${sheet + 1}/${sheetCount}</span></td></tr>
 ${rows}
 </table></body></html>`;
   });
@@ -322,7 +362,7 @@ function buildLadpraoDelivery(input, imageFileIds) {
   const products = new Map();
   report.items.forEach((item, index) => {
     if (!products.has(item.name)) products.set(item.name, {category:REPORT_SLOTS[index].category, units:[]});
-    products.get(item.name).units.push(`${item.qty_remaining} ${item.unit}${item.note ? ` (${item.note})` : ''}`);
+    products.get(item.name).units.push(`${item.qty_remaining} ${item.unit}${item.exp ? ` EXP ${formatExp(item.exp)}` : ''}${item.note ? ` (${item.note})` : ''}`);
   });
   for (const [name, product] of products) {
     if (product.category !== lastCategory) { lines.push(`\n[${product.category}]`); lastCategory = product.category; }

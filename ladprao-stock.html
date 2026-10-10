@@ -26,7 +26,12 @@ legend{font-size:15px;font-weight:700;color:var(--blue-700);padding:0 4px 10px}
 .item input{margin:0;text-align:center;background:var(--gray-50);font-weight:600;min-height:44px;padding:8px 5px;border-radius:9px}
 .unit-inputs{display:flex;gap:6px;align-items:flex-end}
 .unit-field{display:flex;flex-direction:column;align-items:center;gap:4px;width:58px;margin:0}
-.item .item-note{grid-column:1/-1;min-height:0;text-align:left;font-weight:400;font-size:16px;padding:8px 10px;background:white}
+.item-extra{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) 138px;gap:6px}
+.item .item-extra input{min-height:0;text-align:left;font-weight:400;font-size:16px;padding:8px 10px;background:white}
+.exp-field{position:relative;margin:0}
+.exp-field span{position:absolute;top:-7px;left:9px;padding:0 4px;background:white;font-size:11px;font-weight:600;color:var(--gray-600);line-height:1.2}
+.exp-field.must span{color:#b45309}
+.exp-field.must input{border-color:#f5d08a}
 .unit{display:block;font-size:11px;font-weight:500;color:var(--gray-600);text-align:center}
 button{background:linear-gradient(135deg,#16a34a,#15803d);color:white;width:100%;cursor:pointer;border:0;border-radius:13px;padding:14px;font-weight:700;box-shadow:0 4px 12px #16a34a26}
 button:disabled{background:#94a3b8;box-shadow:none;cursor:default}
@@ -48,6 +53,7 @@ small{color:var(--gray-600);font-size:12px;font-weight:400}
 <header class="page-header"><small>กรงสี Assistant · ลาดพร้าว 122</small><h1>รายงานสต็อกคงเหลือ</h1></header>
 <p class="notice">เมื่อยืนยัน ระบบจะส่งรายงานเข้ากลุ่ม “ลาดพร้าว 122 Operation” ทันที</p>
 <p>กรอกทุกช่อง ของหมดใส่ <strong>0</strong> หน้านี้ไม่ส่งใบสั่งของ</p>
+<p>ช่อง <strong>EXP</strong> ใส่วันหมดอายุที่ใกล้ที่สุด · ช่องสีส้มต้องใส่เมื่อยังมีของเหลือ</p>
 <form id="report" novalidate>
 <label>ชื่อผู้ตรวจ<input id="inspector" required maxlength="100" autocomplete="name"></label>
 <div class="category-nav" id="category-nav"><nav class="category-tabs" id="category-tabs" aria-label="หมวดสินค้า"></nav><div id="progress" aria-live="polite"></div></div><div id="items"></div>
@@ -88,13 +94,20 @@ for (const [categoryIndex, category] of categories.entries()) {
     const unit = document.createElement('span'); unit.className = 'unit'; unit.textContent = slot.unit;
     const input = document.createElement('input'); input.type = 'number'; input.min = '0'; input.step = 'any'; input.required = true; input.inputMode = 'decimal'; input.dataset.slot = index; input.setAttribute('aria-label', slot.label + ' ' + slot.unit);
     label.append(unit, input); productRows.get(slot.name).append(label);
-    const note = document.createElement('input'); note.type = 'text'; note.maxLength = 50; note.className = 'item-note'; note.placeholder = 'หมายเหตุ (ถ้ามี) เช่น 4 กระป๋อง'; note.dataset.note = index; note.setAttribute('aria-label', 'หมายเหตุ ' + slot.label);
-    productRows.get(slot.name).parentElement.append(note);
+    const note = document.createElement('input'); note.type = 'text'; note.maxLength = 50; note.placeholder = 'หมายเหตุ (ถ้ามี)'; note.dataset.note = index; note.setAttribute('aria-label', 'หมายเหตุ ' + slot.label);
+    const expLabel = document.createElement('label'); expLabel.className = 'exp-field' + (slot.expRequired ? ' must' : '');
+    const expTag = document.createElement('span'); expTag.textContent = slot.expRequired ? 'EXP (ต้องใส่)' : 'EXP';
+    const exp = document.createElement('input'); exp.type = 'date'; exp.min = '2020-01-01'; exp.max = '2099-12-31'; exp.dataset.exp = index; exp.setAttribute('aria-label', 'วันหมดอายุ ' + slot.label);
+    if (slot.expRequired) input.addEventListener('input', () => { exp.required = input.value !== '' && Number(input.value) > 0; });
+    expLabel.append(expTag, exp);
+    const extra = document.createElement('div'); extra.className = 'item-extra'; extra.append(note, expLabel);
+    productRows.get(slot.name).parentElement.append(extra);
   });
   $('items').append(section);
 }
 fields = [...document.querySelectorAll('[data-slot]')];
 const noteFields = [...document.querySelectorAll('[data-note]')];
+const expFields = [...document.querySelectorAll('[data-exp]')];
 function progress() {
   const filled = list => list.filter(f => f.value !== '' && f.validity.valid).length;
   const currentFields = [...panels[activeCategory].querySelectorAll('[data-slot]')];
@@ -121,23 +134,24 @@ $('report').addEventListener('submit', async event => {
   }
   const invalid = [...$('report').querySelectorAll('input,textarea')].find(field => !field.disabled && !field.validity.valid);
   if (invalid) {
-    if (invalid.dataset.slot !== undefined) showCategory(categories.indexOf(REPORT_SLOTS[Number(invalid.dataset.slot)].category));
+    const slotIndex = invalid.dataset.slot ?? invalid.dataset.exp;
+    if (slotIndex !== undefined) showCategory(categories.indexOf(REPORT_SLOTS[Number(slotIndex)].category));
     invalid.focus(); invalid.reportValidity();
-    $('status').textContent = 'กรุณากรอกข้อมูลให้ครบ ของหมดให้ใส่ 0';
+    $('status').textContent = invalid.dataset.exp !== undefined ? 'กรุณาใส่วันหมดอายุ (EXP) ของ ' + REPORT_SLOTS[Number(slotIndex)].name : 'กรุณากรอกข้อมูลให้ครบ ของหมดให้ใส่ 0';
     return;
   }
   try {
-    if (!lockedPayload) lockedPayload = validateReport({ requestId: crypto.randomUUID(), branch: REPORT_BRANCH, submittedBy: $('inspector').value, note: '', items: fields.map(f => ({name: REPORT_SLOTS[Number(f.dataset.slot)].name, unit: REPORT_SLOTS[Number(f.dataset.slot)].unit, qty_remaining: f.value === '' ? null : Number(f.value), note: noteFields[Number(f.dataset.slot)].value})) });
+    if (!lockedPayload) lockedPayload = validateReport({ requestId: crypto.randomUUID(), branch: REPORT_BRANCH, submittedBy: $('inspector').value, note: '', items: fields.map(f => ({name: REPORT_SLOTS[Number(f.dataset.slot)].name, unit: REPORT_SLOTS[Number(f.dataset.slot)].unit, qty_remaining: f.value === '' ? null : Number(f.value), note: noteFields[Number(f.dataset.slot)].value, exp: expFields[Number(f.dataset.slot)].value})) });
   } catch (error) { $('status').textContent = error.message; return; }
   if (!lockedPayload.submittedAt) { firstAttemptAt = Date.now(); lockedPayload.submittedAt = new Date(firstAttemptAt).toISOString(); }
   $('send').disabled = true;
-  for (const field of [...fields, ...noteFields, $('inspector')]) field.disabled = true;
+  for (const field of [...fields, ...noteFields, ...expFields, $('inspector')]) field.disabled = true;
   $('status').textContent = 'กำลังตรวจผลรายงาน… รหัส ' + lockedPayload.requestId;
   try {
     const response = await fetch('/api/ladprao-stock', {method:'POST', headers:{'Content-Type':'application/json'},body:JSON.stringify(lockedPayload),signal:AbortSignal.timeout(60000)});
     const result = await response.json();
     if (!response.ok) {
-      if ([400,405,503].includes(response.status)) { lockedPayload = null; for (const field of [...fields, ...noteFields, $('inspector')]) field.disabled = false; }
+      if ([400,405,503].includes(response.status)) { lockedPayload = null; for (const field of [...fields, ...noteFields, ...expFields, $('inspector')]) field.disabled = false; }
       throw new Error(result.message || 'ยังยืนยันผลไม่ได้');
     }
     const receipt = reportReceipt(result, lockedPayload.requestId);
